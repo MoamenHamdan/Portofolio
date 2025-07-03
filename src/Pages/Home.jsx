@@ -10,6 +10,7 @@ import {
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import Tilt from 'react-parallax-tilt';
 
 // Memoized Components
 const StatusBadge = memo(() => (
@@ -255,41 +256,33 @@ const Home = () => {
               </div>
             </div>
 
-            {/* Right Column - Optimized Lottie Animation */}
+            {/* Right Column - Parallax Tilt Image */}
             <div
               className="w-full py-[10%] sm:py-0 lg:w-1/2 h-auto lg:h-[600px] xl:h-[750px] relative flex items-center justify-center order-2 lg:order-2 mt-8 lg:mt-0"
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
               data-aos="fade-left"
               data-aos-delay="600"
             >
-              <div className="relative w-full opacity-90">
-                <div
-                  className={`absolute inset-0 bg-gradient-to-r from-[#6366f1]/10 to-[#a855f7]/10 rounded-3xl blur-3xl transition-all duration-700 ease-in-out ${
-                    isHovering ? "opacity-50 scale-105" : "opacity-20 scale-100"
-                  }`}
-                ></div>
-
-                <div
-                  className={`relative z-10 w-full opacity-90 transform transition-transform duration-500 ${
-                    isHovering ? "scale-105" : "scale-100"
-                  }`}
-                >
-                  <DotLottieReact {...lottieOptions} />
+              <Tilt
+                tiltMaxAngleX={20}
+                tiltMaxAngleY={20}
+                perspective={1000}
+                scale={1.07}
+                transitionSpeed={1000}
+                gyroscope={true}
+                className="w-[220px] h-[220px] sm:w-[320px] sm:h-[320px] rounded-3xl flex items-center justify-center group"
+                style={{ overflow: 'visible' }}
+              >
+                <div className="relative w-full h-full">
+                  {/* Glowing gradient shadow */}
+                  <div className="absolute -inset-3 rounded-3xl blur-2xl opacity-60 z-0 group-hover:opacity-90 transition-all duration-500 bg-gradient-to-br from-[#6366f1]/40 via-[#a855f7]/30 to-[#6366f1]/40"></div>
+                  <img
+                    src="/Photo.jpg"
+                    alt="Moamen Hamdan"
+                    className="relative w-full h-full object-cover rounded-3xl border-4 border-white/10 shadow-xl group-hover:shadow-[0_0_60px_10px_rgba(139,92,246,0.18)] transition-all duration-500 z-10"
+                    loading="lazy"
+                  />
                 </div>
-
-                <div
-                  className={`absolute inset-0 pointer-events-none transition-all duration-700 ${
-                    isHovering ? "opacity-50" : "opacity-20"
-                  }`}
-                >
-                  <div
-                    className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-br from-indigo-500/10 to-purple-500/10 blur-3xl animate-[pulse_6s_cubic-bezier(0.4,0,0.6,1)_infinite] transition-all duration-700 ${
-                      isHovering ? "scale-110" : "scale-100"
-                    }`}
-                  ></div>
-                </div>
-              </div>
+              </Tilt>
             </div>
           </div>
         </div>
