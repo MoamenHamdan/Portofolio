@@ -96,7 +96,7 @@ const TYPING_SPEED = 100;
 const ERASING_SPEED = 50;
 const PAUSE_DURATION = 2000;
 const WORDS = ["Semicolon Ambassador","Bug-Hunter", "Tech Enthusiast"];
-const TECH_STACK = ["C#", "ASP.NET", "REST APIs", "SQL Server"];
+const TECH_STACK = ["C#", "ASP.NET", "Entity Framework", "SQL Server"];
 const SOCIAL_LINKS = [
   { icon: Github, link: "https://github.com/MoamenHamdan" },
   { icon: Linkedin, link: "https://www.linkedin.com/in/moamen-hamdan/" },
@@ -176,7 +176,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#030014] overflow-hidden" id="Home">
+    <div className="min-h-screen overflow-hidden pt-20" id="Home">
       <div
         className={`relative z-10 transition-all duration-1000 ${
           isLoaded ? "opacity-100" : "opacity-0"
@@ -272,16 +272,18 @@ const Home = () => {
                 className="w-[220px] h-[220px] sm:w-[320px] sm:h-[320px] rounded-3xl flex items-center justify-center group"
                 style={{ overflow: 'visible' }}
               >
-                <div className="relative w-full h-full">
-                  {/* Glowing gradient shadow */}
-                  <div className="absolute -inset-3 rounded-3xl blur-2xl opacity-60 z-0 group-hover:opacity-90 transition-all duration-500 bg-gradient-to-br from-[#6366f1]/40 via-[#a855f7]/30 to-[#6366f1]/40"></div>
-                  <img
-                    src="/Photo.jpg"
-                    alt="Moamen Hamdan"
-                    className="relative w-full h-full object-cover rounded-3xl border-4 border-white/10 shadow-xl group-hover:shadow-[0_0_60px_10px_rgba(139,92,246,0.18)] transition-all duration-500 z-10"
-                    loading="lazy"
-                  />
-                </div>
+               <div className="relative w-full h-full -mt-10 sm:-mt-10">
+  {/* Glowing gradient shadow */}
+  <div className="hidden md:block absolute -inset-3 rounded-3xl blur-2xl opacity-60 z-0 group-hover:opacity-90 transition-all duration-500 bg-gradient-to-br from-[#6366f1]/40 via-[#a855f7]/30 to-[#6366f1]/40"></div>
+
+  <img
+    src="/home.jpg"
+    alt="Moamen Hamdan"
+    className="relative w-full h-full object-cover rounded-3xl border-4 border-white/10 shadow-xl group-hover:shadow-[0_0_60px_10px_rgba(139,92,246,0.18)] transition-all duration-500 z-10 max-h-[500px] sm:max-h-[300px]"
+    loading="lazy"
+  />
+</div>
+
               </Tilt>
             </div>
           </div>
