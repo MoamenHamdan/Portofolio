@@ -18,24 +18,28 @@ const Certificate = ({ ImgSertif }) => {
 		<Box component="div" sx={{ width: "100%" }}>
 			{/* Thumbnail Container */}
 			<Box
-				className=""
+				className="certificate-thumb"
 				sx={{
 					position: "relative",
 					overflow: "hidden",
 					borderRadius: 2,
 					boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
 					transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-					"&:hover": {
+					aspectRatio: '4 / 3',
+					height: 220,
+					width: '100%',
+					background: '#18181b',
+					'&:hover': {
 						transform: "translateY(-5px)",
 						boxShadow: "0 12px 24px rgba(0,0,0,0.2)",
-						"& .overlay": {
+						'& .overlay': {
 							opacity: 1,
 						},
-						"& .hover-content": {
+						'& .hover-content': {
 							transform: "translate(-50%, -50%)",
 							opacity: 1,
 						},
-						"& .certificate-image": {
+						'& .certificate-image': {
 							filter: "contrast(1.05) brightness(1) saturate(1.1)",
 						},
 					},
@@ -44,7 +48,9 @@ const Certificate = ({ ImgSertif }) => {
 				<Box
 					sx={{
 						position: "relative",
-						"&::before": {
+						width: '100%',
+						height: '100%',
+						'&::before': {
 							content: '""',
 							position: "absolute",
 							top: 0,
@@ -61,7 +67,7 @@ const Certificate = ({ ImgSertif }) => {
 						alt="Certificate"
 						style={{
 							width: "100%",
-							height: "auto",
+							height: "100%",
 							display: "block",
 							objectFit: "cover",
 							filter: "contrast(1.10) brightness(0.9) saturate(1.1)",
