@@ -22,7 +22,7 @@ const AdminLayout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[#030014] text-white font-['Poppins',sans-serif]">
+    <div className="flex min-h-[100dvh] bg-[#030014] text-white font-['Poppins',sans-serif]">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div

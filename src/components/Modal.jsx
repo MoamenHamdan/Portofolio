@@ -5,7 +5,7 @@ const Modal = ({ isOpen, onClose, children }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg max-h-screen overflow-y-auto">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg max-h-[100dvh] overflow-y-auto">
         <div className="flex justify-end">
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <svg

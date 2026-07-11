@@ -82,7 +82,7 @@ const AdminPanel = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#030014] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#030014] flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-[#b91c1c]/30 border-t-[#b91c1c] rounded-full animate-spin" />
       </div>
     );
@@ -91,7 +91,7 @@ const AdminPanel = () => {
   if (!user) {
     return (
       <div
-        className="min-h-screen bg-[#030014] flex items-center justify-center px-4 font-['Poppins',sans-serif] relative overflow-hidden"
+        className="min-h-[100dvh] bg-[#030014] flex items-center justify-center px-4 font-['Poppins',sans-serif] relative overflow-hidden"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
         {/* Background blobs */}

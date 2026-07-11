@@ -225,7 +225,7 @@ const WelcomeScreen = ({ onLoadingComplete }) => {
           />
 
           {/* Main content */}
-          <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-10">
+          <div className="relative z-10 min-h-[100dvh] flex flex-col items-center justify-center px-4 py-10">
             <div className="w-full max-w-2xl space-y-6">
 
               {/* Top badge */}

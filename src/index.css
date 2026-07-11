@@ -21,6 +21,12 @@ body {
 	scroll-behavior: smooth !important;
 }
 
+#root {
+	overflow-x: hidden;
+	width: 100%;
+	position: relative;
+}
+
 /* Custom Selection */
 ::selection {
 	background: rgba(99, 102, 241, 0.3);

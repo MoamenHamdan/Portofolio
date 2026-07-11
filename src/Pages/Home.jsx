@@ -209,7 +209,7 @@ const Home = () => {
 
   return (
     <div
-      className="relative min-h-screen overflow-hidden pt-32 md:pt-20 bg-black"
+      className="relative min-h-[100dvh] overflow-hidden pt-32 md:pt-20 bg-black"
       id="Home"
       onMouseMove={handleMouseMove}
     >
@@ -264,8 +264,8 @@ const Home = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-[#ef4444]/5 via-transparent to-[#991b1b]/5 pointer-events-none" />
 
       <div className={`relative z-10 transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
-        <div className="container mx-auto px-[5%] sm:px-6 lg:px-[0%] min-h-screen">
-          <div className="flex flex-col lg:flex-row items-center justify-center h-screen md:justify-between gap-0 sm:gap-12 lg:gap-20">
+        <div className="container mx-auto px-[5%] sm:px-6 lg:px-[0%] min-h-[100dvh]">
+          <div className="flex flex-col lg:flex-row items-center justify-center min-h-[100dvh] lg:h-[100dvh] md:justify-between gap-0 sm:gap-12 lg:gap-20 py-10 lg:py-0">
 
             {/* Left Column */}
             <div
