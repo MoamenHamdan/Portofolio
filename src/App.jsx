@@ -11,6 +11,11 @@ import ProjectDetails from "./components/ProjectDetail";
 import WelcomeScreen from "./Pages/WelcomeScreen";
 import { AnimatePresence } from 'framer-motion';
 import AdminPanel from "./Pages/AdminPanel";
+import TestimonialsSection from "./components/TestimonialsSection";
+import CustomCursor from "./components/CustomCursor";
+import BlogSection from "./components/BlogSection";
+import CyberSection from "./components/CyberSection";
+import CyberPageWrapper from "./components/CyberPageWrapper";
 
 const LandingPage = ({ showWelcome, setShowWelcome }) => {
   return (
@@ -22,47 +27,27 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
       </AnimatePresence>
 
       {!showWelcome && (
-        <>
+        <CyberPageWrapper>
+          <CustomCursor />
           <Navbar />
           <AnimatedBackground />
           <Home />
           <About />
           <Portofolio />
+          <CyberSection />
+          <BlogSection />
+          <TestimonialsSection />
           <ContactPage />
-          <footer>
-            <center>
-              <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
-              <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
-                © 2025{" "}
-                <a href="https://flowbite.com/" className="hover:underline">
-                MOAMEN HAMDAN
-                </a>
-                . All Rights Reserved.
-              </span>
-            </center>
-          </footer>
-        </>
+        </CyberPageWrapper>
       )}
     </>
   );
 };
 
 const ProjectPageLayout = () => (
-  <>
+  <CyberPageWrapper>
     <ProjectDetails />
-    <footer>
-      <center>
-        <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
-        <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
-          © 2025{" "}
-          <a href="https://flowbite.com/" className="hover:underline">
-            MOAMEN HAMDAN
-          </a>
-          . All Rights Reserved.
-        </span>
-      </center>
-    </footer>
-  </>
+  </CyberPageWrapper>
 );
 
 function App() {

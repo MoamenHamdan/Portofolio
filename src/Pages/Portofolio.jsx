@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { db, collection } from "../firebase";
-import { getDocs } from "firebase/firestore";
+import { db, collection, getDocs } from "../firebase";
 import PropTypes from "prop-types";
 import SwipeableViews from "react-swipeable-views";
 import { useTheme } from "@mui/material/styles";
@@ -65,7 +64,7 @@ const ToggleButton = ({ onClick, isShowingMore }) => (
         <polyline points={isShowingMore ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}></polyline>
       </svg>
     </span>
-    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-500/50 transition-all duration-300 group-hover:w-full"></span>
+    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-500/50 transition-all duration-300 group-hover:w-full"></span>
   </button>
 );
 
@@ -100,17 +99,8 @@ function a11yProps(index) {
   };
 }
 
-const techStacks = [
-  { icon: "csharp.svg", language: "C#" },  
-  { icon: "dotnet.svg", language: ".NET" }, 
-  { icon: "java.svg", language: "Java" },
-  { icon: "html.svg", language: "HTML" },
-  { icon: "css.svg", language: "CSS" },
-  { icon: "javascript.svg", language: "JavaScript" },
-  { icon: "firebase.svg", language: "Firebase" },
-  { icon: "bootstrap.svg", language: "Bootstrap" },
-  { icon: "burp.svg", language: "BurpSuite" },
-];
+// techStacks is now loaded from Firestore (Skills collection)
+// Admin can manage these from the admin panel → Tech Stack / Skills
 
 
 export default function FullWidthTabs() {
@@ -118,6 +108,7 @@ export default function FullWidthTabs() {
   const [value, setValue] = useState(0);
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [skills, setSkills] = useState([]);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllCertificates, setShowAllCertificates] = useState(false);
   const isMobile = window.innerWidth < 768;
@@ -134,22 +125,33 @@ export default function FullWidthTabs() {
     try {
       const projectCollection = collection(db, "projects");
       const certificateCollection = collection(db, "certificates");
+      const skillsCollection = collection(db, "skills");
 
-      const [projectSnapshot, certificateSnapshot] = await Promise.all([
+      const [projectSnapshot, certificateSnapshot, skillsSnapshot] = await Promise.all([
         getDocs(projectCollection),
         getDocs(certificateCollection),
+        getDocs(skillsCollection),
       ]);
 
-      const projectData = projectSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        TechStack: doc.data().TechStack || [],
-      }));
+      const projectData = projectSnapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          TechStack: doc.data().TechStack || [],
+        }))
+        .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
-      const certificateData = certificateSnapshot.docs.map((doc) => doc.data());
+      const certificateData = certificateSnapshot.docs
+        .map((doc) => doc.data())
+        .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+
+      const skillsData = skillsSnapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
       setProjects(projectData);
       setCertificates(certificateData);
+      setSkills(skillsData);
 
       // Store in localStorage
       localStorage.setItem("projects", JSON.stringify(projectData));
@@ -179,48 +181,31 @@ export default function FullWidthTabs() {
   const displayedCertificates = showAllCertificates ? certificates : certificates.slice(0, initialItems);
 
   return (
-    <div className="md:px-[10%] px-[5%] w-full sm:mt-0 mt-[3rem] bg-[#030014] overflow-hidden" id="Portofolio">
-      {/* Header section - unchanged */}
+    <div className="md:px-[10%] px-[5%] w-full sm:mt-0 mt-[3rem] bg-black overflow-hidden" id="Portofolio">
+      {/* Header section */}
       <div className="text-center pb-10" data-aos="fade-up" data-aos-duration="1000">
-        <h2 className="inline-block text-3xl md:text-5xl font-bold text-center mx-auto text-transparent bg-clip-text bg-gradient-to-r from-[#6366f1] to-[#a855f7]">
-          <span style={{
-            color: '#6366f1',
-            backgroundImage: 'linear-gradient(45deg, #6366f1 10%, #a855f7 93%)',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            Portfolio Showcase
-          </span>
+        <h2 
+          className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-900 font-mono tracking-widest glitch-text uppercase"
+          data-text="Portfolio Showcase"
+        >
+          Portfolio Showcase
         </h2>
-        <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base mt-2">
-          Explore my journey through projects, certifications, and technical expertise. 
-          Each section represents a milestone in my continuous learning path.
+        <p className="text-gray-400 max-w-2xl mx-auto text-sm md:text-base mt-2">
+          A collection of my technical projects, certifications, and expertise.
         </p>
       </div>
 
       <Box sx={{ width: "100%" }}>
-        {/* AppBar and Tabs section - unchanged */}
         <AppBar
           position="static"
           elevation={0}
           sx={{
-            bgcolor: "transparent",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "20px",
+            bgcolor: "rgba(255, 255, 255, 0.02)",
+            border: "1px solid rgba(255, 255, 255, 0.05)",
+            borderRadius: "24px",
             position: "relative",
             overflow: "hidden",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: "linear-gradient(180deg, rgba(139, 92, 246, 0.03) 0%, rgba(59, 130, 246, 0.03) 100%)",
-              backdropFilter: "blur(10px)",
-              zIndex: 0,
-            },
+            backdropFilter: "blur(20px)",
           }}
           className="md:px-4"
         >
@@ -246,7 +231,7 @@ export default function FullWidthTabs() {
                 borderRadius: "12px",
                 "&:hover": {
                   color: "#ffffff",
-                  backgroundColor: "rgba(139, 92, 246, 0.1)",
+                  backgroundColor: "rgba(239, 68, 68, 0.1)",
                   transform: "translateY(-2px)",
                   "& .lucide": {
                     transform: "scale(1.1) rotate(5deg)",
@@ -254,10 +239,10 @@ export default function FullWidthTabs() {
                 },
                 "&.Mui-selected": {
                   color: "#fff",
-                  background: "linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2))",
-                  boxShadow: "0 4px 15px -3px rgba(139, 92, 246, 0.2)",
+                  background: "linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(153, 27, 27, 0.2))",
+                  boxShadow: "0 4px 15px -3px rgba(239, 68, 68, 0.2)",
                   "& .lucide": {
-                    color: "#a78bfa",
+                    color: "#fca5a5",
                   },
                 },
               },
@@ -331,7 +316,7 @@ export default function FullWidthTabs() {
                     data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
                     data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
                   >
-                    <Certificate ImgSertif={certificate.Img} />
+                    <Certificate ImgSertif={certificate.image || certificate.Img} />
                   </div>
                 ))}
               </div>
@@ -349,13 +334,13 @@ export default function FullWidthTabs() {
           <TabPanel value={value} index={2} dir={theme.direction}>
             <div className="container mx-auto flex justify-center items-center overflow-hidden pb-[5%]">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 lg:gap-8 gap-5">
-                {techStacks.map((stack, index) => (
+                {skills.map((skill, index) => (
                   <div
-                    key={index}
+                    key={skill.id || index}
                     data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
                     data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
                   >
-                    <TechStackIcon TechStackIcon={stack.icon} Language={stack.language} />
+                    <TechStackIcon TechStackIcon={skill.icon} Language={skill.language} />
                   </div>
                 ))}
               </div>

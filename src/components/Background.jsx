@@ -1,68 +1,134 @@
 import React, { useEffect, useRef } from "react"
 
 const AnimatedBackground = () => {
-	const blobRefs = useRef([])
-	const initialPositions = [
-		{ x: -4, y: 0 },
-		{ x: -4, y: 0 },
-		{ x: 20, y: -8 },
-		{ x: 20, y: -8 },
-	]
+	const canvasRef = useRef(null);
+	const mouseRef = useRef({ x: 0, y: 0, radius: 150 });
 
 	useEffect(() => {
-		let currentScroll = 0
-		let requestId
+		const canvas = canvasRef.current;
+		const ctx = canvas.getContext('2d');
+		let animationFrameId;
 
-		const handleScroll = () => {
-			const newScroll = window.pageYOffset
-			const scrollDelta = newScroll - currentScroll
-			currentScroll = newScroll
+		const resizeCanvas = () => {
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+		};
 
-			blobRefs.current.forEach((blob, index) => {
-				const initialPos = initialPositions[index]
+		const handleMouseMove = (e) => {
+			mouseRef.current.x = e.clientX;
+			mouseRef.current.y = e.clientY;
+		};
 
-				// Calculating movement in both X and Y direction
-				const xOffset = Math.sin(newScroll / 100 + index * 0.5) * 340 // Horizontal movement
-				const yOffset = Math.cos(newScroll / 100 + index * 0.5) * 40 // Vertical movement
+		window.addEventListener('resize', resizeCanvas);
+		window.addEventListener('mousemove', handleMouseMove);
+		resizeCanvas();
 
-				const x = initialPos.x + xOffset
-				const y = initialPos.y + yOffset
+		const particles = [];
+		const particleCount = 120; // Increased count
+		const connectionDistance = 140;
 
-				// Apply transformation with smooth transition
-				blob.style.transform = `translate(${x}px, ${y}px)`
-				blob.style.transition = "transform 1.4s ease-out"
-			})
+		class Particle {
+			constructor() {
+				this.init();
+			}
 
-			requestId = requestAnimationFrame(handleScroll)
+			init() {
+				this.x = Math.random() * canvas.width;
+				this.y = Math.random() * canvas.height;
+				this.size = Math.random() * 2 + 0.5;
+				this.speedX = (Math.random() - 0.5) * 0.4;
+				this.speedY = (Math.random() - 0.5) * 0.4;
+				this.color = Math.random() > 0.5 ? '#ef4444' : '#22c55e';
+				this.opacity = Math.random() * 0.5 + 0.2;
+			}
+
+			update() {
+				// Mouse interaction
+				const dx = mouseRef.current.x - this.x;
+				const dy = mouseRef.current.y - this.y;
+				const distance = Math.sqrt(dx * dx + dy * dy);
+
+				if (distance < mouseRef.current.radius) {
+					const force = (mouseRef.current.radius - distance) / mouseRef.current.radius;
+					const directionX = dx / distance;
+					const directionY = dy / distance;
+					this.x -= directionX * force * 2;
+					this.y -= directionY * force * 2;
+				}
+
+				this.x += this.speedX;
+				this.y += this.speedY;
+
+				if (this.x > canvas.width) this.x = 0;
+				else if (this.x < 0) this.x = canvas.width;
+				if (this.y > canvas.height) this.y = 0;
+				else if (this.y < 0) this.y = canvas.height;
+			}
+
+			draw() {
+				ctx.fillStyle = this.color;
+				ctx.globalAlpha = this.opacity;
+				ctx.beginPath();
+				ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+				ctx.fill();
+			}
 		}
 
-		window.addEventListener("scroll", handleScroll)
+		for (let i = 0; i < particleCount; i++) {
+			particles.push(new Particle());
+		}
+
+		const animate = () => {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.globalAlpha = 1;
+
+			particles.forEach((particle, index) => {
+				particle.update();
+				particle.draw();
+
+				for (let j = index + 1; j < particles.length; j++) {
+					const dx = particle.x - particles[j].x;
+					const dy = particle.y - particles[j].y;
+					const distance = Math.sqrt(dx * dx + dy * dy);
+
+					if (distance < connectionDistance) {
+						ctx.beginPath();
+						ctx.strokeStyle = particle.color;
+						ctx.globalAlpha = (1 - distance / connectionDistance) * 0.2;
+						ctx.lineWidth = 0.5;
+						ctx.moveTo(particle.x, particle.y);
+						ctx.lineTo(particles[j].x, particles[j].y);
+						ctx.stroke();
+					}
+				}
+			});
+
+			animationFrameId = requestAnimationFrame(animate);
+		};
+
+		animate();
+
 		return () => {
-			window.removeEventListener("scroll", handleScroll)
-			cancelAnimationFrame(requestId)
-		}
-	}, [])
+			window.removeEventListener('resize', resizeCanvas);
+			window.removeEventListener('mousemove', handleMouseMove);
+			cancelAnimationFrame(animationFrameId);
+		};
+	}, []);
 
 	return (
-		<div className="fixed inset-0 ">
-			<div className="absolute inset-0">
-				<div
-					ref={(ref) => (blobRefs.current[0] = ref)}
-					className="absolute top-0 -left-4 md:w-96 md:h-96 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 md:opacity-20 "></div>
-				<div
-					ref={(ref) => (blobRefs.current[1] = ref)}
-					className="absolute top-0 -right-4 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 md:opacity-20 hidden sm:block"></div>
-				<div
-					ref={(ref) => (blobRefs.current[2] = ref)}
-					className="absolute -bottom-8 left-[-40%] md:left-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 md:opacity-20 "></div>
-					<div
-					ref={(ref) => (blobRefs.current[3] = ref)}
-					className="absolute -bottom-10 right-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 md:opacity-10 hidden sm:block"></div>
+		<div className="fixed inset-0 pointer-events-none z-0 bg-[#020409]">
+			<canvas ref={canvasRef} className="absolute inset-0" />
+
+			{/* Ambient Glows */}
+			<div className="absolute inset-0 overflow-hidden">
+				<div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-red-600/10 rounded-full filter blur-[120px] animate-pulse" />
+				<div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-green-600/10 rounded-full filter blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
 			</div>
-			<div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f10_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f10_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+
+			{/* Grain/Stars effect */}
+			<div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:32px_32px] opacity-30" />
 		</div>
 	)
 }
 
 export default AnimatedBackground
-

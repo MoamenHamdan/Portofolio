@@ -8,6 +8,14 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+
+# Environment variables — NEVER commit .env.local (contains Firebase config)
+# Firebase client keys are not "secret" in the traditional sense
+# (they're visible in browser network requests by design), but .env.local
+# is still the correct practice for config management.
+# The REAL security boundary is Firestore Security Rules, NOT hiding this file.
+.env.local
+.env.*.local
 *.local
 
 # Editor directories and files
