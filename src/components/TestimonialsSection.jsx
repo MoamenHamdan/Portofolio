@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { db, collection, getDocs } from "../firebase";
 import { Star, Quote, ChevronLeft, ChevronRight, Shield } from "lucide-react";
@@ -29,19 +29,8 @@ const TestimonialsSection = () => {
         fetch();
     }, []);
 
-    const defaultTestimonials = [
-        {
-            id: "default-1",
-            name: "Security Architect",
-            role: "Project Mentorship",
-            feedback: "Moamen has a sharp eye for analyzing security logs and implementing robust, clean infrastructure solutions. A promising SOC analyst candidate.",
-            rating: 5
-        }
-    ];
-
-    const displayTestimonials = testimonials.length > 0 ? testimonials : defaultTestimonials;
-
-    if (loading) return null;
+    const displayTestimonials = testimonials;
+    if (loading || !testimonials.length) return <section id="Testimonials" className="px-[5%] py-12 text-center text-gray-400"><h2 className="text-2xl text-white">Client Testimonials</h2><p role="status">{loading ? "Loading reviews…" : "No reviews available."}</p></section>;
 
     const prev = () => setCurrent(c => (c - 1 + displayTestimonials.length) % displayTestimonials.length);
     const next = () => setCurrent(c => (c + 1) % displayTestimonials.length);
@@ -60,7 +49,7 @@ const TestimonialsSection = () => {
         setIsDragging(false);
     };
 
-    const item = displayTestimonials[current] || defaultTestimonials[0];
+    const item = displayTestimonials[current] || displayTestimonials[0];
 
     return (
         <section
@@ -84,7 +73,7 @@ const TestimonialsSection = () => {
                 onTouchStart={onPointerDown} onTouchEnd={onPointerUp}
                 data-aos="zoom-in-up"
             >
-                <div className="relative overflow-hidden h-auto md:h-[350px]">
+                <div className="relative overflow-hidden h-auto min-h-[350px]">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={current}

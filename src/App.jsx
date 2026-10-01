@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import React, { useState } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
+import AOS from 'aos';
+import ContentState from './components/ContentState';
 import "./index.css";
 import Home from "./Pages/Home";
 import About from "./Pages/About";
@@ -7,41 +9,21 @@ import AnimatedBackground from "./components/Background";
 import Navbar from "./components/Navbar";
 import Portofolio from "./Pages/Portofolio";
 import ContactPage from "./Pages/Contact";
-import ProjectDetails from "./components/ProjectDetail";
-import WelcomeScreen from "./Pages/WelcomeScreen";
-import { AnimatePresence } from 'framer-motion';
-import AdminPanel from "./Pages/AdminPanel";
+const ProjectDetails = lazy(() => import("./components/ProjectDetail"));
+const AdminPanel = lazy(() => import("./Pages/AdminPanel"));
 import TestimonialsSection from "./components/TestimonialsSection";
 import CustomCursor from "./components/CustomCursor";
 import BlogSection from "./components/BlogSection";
 import CyberSection from "./components/CyberSection";
 import CyberPageWrapper from "./components/CyberPageWrapper";
 
-const LandingPage = ({ showWelcome, setShowWelcome }) => {
-  return (
-    <>
-      <AnimatePresence mode="wait">
-        {showWelcome && (
-          <WelcomeScreen onLoadingComplete={() => setShowWelcome(false)} />
-        )}
-      </AnimatePresence>
-
-      {!showWelcome && (
-        <CyberPageWrapper>
-          <CustomCursor />
-          <Navbar />
-          <AnimatedBackground />
-          <Home />
-          <About />
-          <Portofolio />
-          <CyberSection />
-          <BlogSection />
-          <TestimonialsSection />
-          <ContactPage />
-        </CyberPageWrapper>
-      )}
-    </>
-  );
+const LandingPage = () => {
+  useEffect(() => { AOS.init({ once: true, duration: 450, offset: 30, disable: () => window.matchMedia('(prefers-reduced-motion: reduce)').matches }); }, []);
+  return <CyberPageWrapper>
+    <a href="#Home" className="sr-only focus:not-sr-only focus:fixed focus:top-16 focus:z-[60] focus:bg-black focus:p-3">Skip to content</a>
+    <CustomCursor /><Navbar /><AnimatedBackground />
+    <main><Home /><About /><Portofolio /><CyberSection /><BlogSection /><TestimonialsSection /><ContactPage /></main>
+  </CyberPageWrapper>;
 };
 
 const ProjectPageLayout = () => (
@@ -51,15 +33,13 @@ const ProjectPageLayout = () => (
 );
 
 function App() {
-  const [showWelcome, setShowWelcome] = useState(true);
-
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage showWelcome={showWelcome} setShowWelcome={setShowWelcome} />} />
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <Suspense fallback={<ContentState loading />}><Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/project/:id" element={<ProjectPageLayout />} />
         <Route path="/admin/*" element={<AdminPanel />} />
-      </Routes>
+      </Routes></Suspense>
     </BrowserRouter>
   );
 }

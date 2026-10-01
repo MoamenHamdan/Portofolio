@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { db, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "../../firebase";
 import { compressImage } from "../../utils/imageUtils";
 import {
@@ -329,12 +329,12 @@ const Projects = () => {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  const showToast = (type, message) => {
+  const showToast = useCallback((type, message) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
-  };
+  }, []);
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       const snap = await getDocs(collection(db, "projects"));
       const data = snap.docs
@@ -346,7 +346,7 @@ const Projects = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   const persistOrder = async (ordered) => {
     setOrderSaving(true);
@@ -370,7 +370,7 @@ const Projects = () => {
     });
   };
 
-  useEffect(() => { fetchProjects(); }, []);
+  useEffect(() => { fetchProjects(); }, [fetchProjects]);
 
   const handleOpen = (p = null) => { setEditProject(p); setModalOpen(true); };
 

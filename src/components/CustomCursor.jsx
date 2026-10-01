@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, useSpring } from 'framer-motion';
 
 const CustomCursor = () => {
@@ -12,6 +12,7 @@ const CustomCursor = () => {
     const dotY = useSpring(0, { stiffness: 1000, damping: 40 });
 
     useEffect(() => {
+        if (window.matchMedia("(pointer: coarse), (prefers-reduced-motion: reduce)").matches) { setIsMobile(true); return; }
         const handleResize = () => setIsMobile(window.innerWidth < 768);
         handleResize();
         window.addEventListener('resize', handleResize);

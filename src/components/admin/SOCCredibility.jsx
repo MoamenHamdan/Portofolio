@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { db, doc, getDoc, setDoc } from "../../firebase";
 import {
   Save, Plus, X, Shield, Loader2, CheckCircle, AlertCircle, BookOpen, Target, Info

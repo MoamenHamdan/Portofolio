@@ -123,15 +123,19 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // COMMENTS — if used by Komentar component
+    // COMMENTS — public portfolio guestbook
     // ══════════════════════════════════════════════════════════════════
-    match /comments/{docId} {
+    match /portfolio-comments/{docId} {
       allow read: if true;
-      // Allow anyone to post a comment (same pattern as messages)
       allow create: if
-        request.resource.data.keys().hasAll(['name', 'text', 'timestamp'])
-        && isValidString(request.resource.data.name, 100)
-        && isValidString(request.resource.data.text, 1000);
+        request.resource.data.keys().hasAll(['userName', 'content', 'profileImage', 'createdAt'])
+        && request.resource.data.keys().size() == 4
+        && isValidString(request.resource.data.userName, 100)
+        && isValidString(request.resource.data.content, 1000)
+        && (request.resource.data.profileImage == null
+            || (request.resource.data.profileImage is string
+                && request.resource.data.profileImage.size() <= 2048))
+        && request.resource.data.createdAt == request.time;
       allow update, delete: if isAdmin();
     }
 

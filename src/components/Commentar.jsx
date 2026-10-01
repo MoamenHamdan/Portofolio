@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { getDocs, addDoc, collection, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { addDoc, collection, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase-comment';
+import { db, storage } from '../firebase';
 import { MessageCircle, UserCircle2, Loader2, AlertCircle, Send, ImagePlus, X } from 'lucide-react';
 import AOS from "aos";
 import "aos/dist/aos.css";
 
-const Comment = memo(({ comment, formatDate, index }) => (
+const Comment = memo(({ comment, formatDate }) => (
     <div 
         className="px-4 pt-4 pb-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group hover:shadow-lg hover:-translate-y-0.5"
         
@@ -37,7 +37,7 @@ const Comment = memo(({ comment, formatDate, index }) => (
     </div>
 ));
 
-const CommentForm = memo(({ onSubmit, isSubmitting, error }) => {
+const CommentForm = memo(({ onSubmit, isSubmitting }) => {
     const [newComment, setNewComment] = useState('');
     const [userName, setUserName] = useState('');
     const [imagePreview, setImagePreview] = useState(null);
@@ -48,7 +48,9 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error }) => {
     const handleImageChange = useCallback((e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) return;
+            if (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                return;
+            }
             setImageFile(file);
             const reader = new FileReader();
             reader.onloadend = () => setImagePreview(reader.result);
@@ -64,11 +66,11 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error }) => {
         }
     }, []);
 
-    const handleSubmit = useCallback((e) => {
+    const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
         if (!newComment.trim() || !userName.trim()) return;
         
-        onSubmit({ newComment, userName, imageFile });
+        if (!await onSubmit({ newComment, userName, imageFile })) return;
         setNewComment('');
         setImagePreview(null);
         setImageFile(null);
@@ -85,7 +87,7 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error }) => {
                 <input
                     type="text"
                     value={userName}
-                    onChange={(e) => setUserName(e.target.value)}z
+                    onChange={(e) => setUserName(e.target.value)}
                     placeholder="Enter your name"
                     className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                     required
@@ -189,7 +191,7 @@ const Komentar = () => {
     useEffect(() => {
         // Initialize AOS
         AOS.init({
-            once: false,
+            once: true,
             duration: 1000,
         });
     }, []);
@@ -204,13 +206,16 @@ const Komentar = () => {
                 ...doc.data(),
             }));
             setComments(commentsData);
-        });
+        }, () => setError("Comments could not be loaded. Please try again later."));
     }, []);
 
     const uploadImage = useCallback(async (imageFile) => {
         if (!imageFile) return null;
-        const storageRef = ref(storage, `profile-images/${Date.now()}_${imageFile.name}`);
-        await uploadBytes(storageRef, imageFile);
+        const extension = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[imageFile.type];
+        if (!extension || imageFile.size > 5 * 1024 * 1024) throw new Error('Unsupported profile image');
+        const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const storageRef = ref(storage, `profile-images/${id}.${extension}`);
+        await uploadBytes(storageRef, imageFile, { contentType: imageFile.type });
         return getDownloadURL(storageRef);
     }, []);
 
@@ -221,14 +226,16 @@ const Komentar = () => {
         try {
             const profileImageUrl = await uploadImage(imageFile);
             await addDoc(collection(db, 'portfolio-comments'), {
-                content: newComment,
-                userName,
+                content: newComment.trim(),
+                userName: userName.trim(),
                 profileImage: profileImageUrl,
                 createdAt: serverTimestamp(),
             });
+            return true;
         } catch (error) {
             setError('Failed to post comment. Please try again.');
             console.error('Error adding comment: ', error);
+            return false;
         } finally {
             setIsSubmitting(false);
         }
@@ -275,7 +282,7 @@ const Komentar = () => {
             )}
             
             <div >
-                <CommentForm onSubmit={handleCommentSubmit} isSubmitting={isSubmitting} error={error} />
+                <CommentForm onSubmit={handleCommentSubmit} isSubmitting={isSubmitting} />
             </div>
 
             <div className="space-y-4 h-[300px] overflow-y-auto custom-scrollbar" data-aos="fade-up" data-aos-delay="200">
@@ -285,18 +292,17 @@ const Komentar = () => {
                         <p className="text-gray-400">No comments yet. Start the conversation!</p>
                     </div>
                 ) : (
-                    comments.map((comment, index) => (
+                    comments.map((comment) => (
                         <Comment 
                             key={comment.id} 
                             comment={comment} 
                             formatDate={formatDate}
-                            index={index}
                         />
                     ))
                 )}
             </div>
         </div>
-        <style jsx>{`
+        <style>{`
             .custom-scrollbar::-webkit-scrollbar {
                 width: 6px;
             }

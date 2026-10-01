@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { db, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "../../firebase";
 import { compressImage } from "../../utils/imageUtils";
 import {
   Plus, X, Edit2, Trash2, Upload, Image, Award, Loader2,
-  CheckCircle, AlertCircle, Save, Calendar, GripVertical, Tag, Info
+  CheckCircle, AlertCircle, Save, Calendar, GripVertical, Info
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -288,12 +288,12 @@ const Certificates = () => {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  const showToast = (type, message) => {
+  const showToast = useCallback((type, message) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
-  };
+  }, []);
 
-  const fetchCertificates = async () => {
+  const fetchCertificates = useCallback(async () => {
     try {
       const snap = await getDocs(collection(db, "certificates"));
       const data = snap.docs
@@ -305,7 +305,7 @@ const Certificates = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   // Save new order to Firestore after drag
   const persistOrder = async (ordered) => {
@@ -336,7 +336,7 @@ const Certificates = () => {
     });
   };
 
-  useEffect(() => { fetchCertificates(); }, []);
+  useEffect(() => { fetchCertificates(); }, [fetchCertificates]);
 
   const handleOpen = (c = null) => { setEditCert(c); setModalOpen(true); };
 

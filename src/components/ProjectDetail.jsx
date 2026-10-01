@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { db, doc, getDoc } from "../firebase";
+import ContentState from "./ContentState";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, ExternalLink, Github, Code2, Star,
@@ -98,34 +100,27 @@ const ProjectDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
+    let active = true;
     window.scrollTo(0, 0);
-    const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
-    const selectedProject = storedProjects.find((p) => String(p.id) === id);
-    
-    if (selectedProject) {
-      const enhancedProject = {
-        ...selectedProject,
-        Features: selectedProject.Features || [],
-        TechStack: selectedProject.TechStack || [],
-        Github: selectedProject.Github || 'https://github.com/MoamenHamdan/Personal_wallet',
-      };
-      setProject(enhancedProject);
-    }
-  }, [id]);
-
-  if (!project) {
-    return (
-      <div className="min-h-[100dvh] bg-[#030014] flex items-center justify-center">
-        <div className="text-center space-y-6 animate-fadeIn">
-          <div className="w-16 h-16 md:w-24 md:h-24 mx-auto border-4 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
-          <h2 className="text-xl md:text-3xl font-bold text-white">Loading Project...</h2>
-        </div>
-      </div>
-    );
-  }
+    setLoading(true); setError(null); setProject(null);
+    const timeout = setTimeout(() => { if (active) { setError(new Error('Connection timed out')); setLoading(false); } }, 15000);
+    getDoc(doc(db, 'projects', id)).then(snapshot => {
+      if (!active) return;
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setProject({ ...data, id: snapshot.id, Features: Array.isArray(data.Features) ? data.Features : [], TechStack: Array.isArray(data.TechStack) ? data.TechStack : [], Github: data.Github || '' });
+      }
+      setError(null);
+    }).catch(err => { if (active) setError(err); }).finally(() => { clearTimeout(timeout); if (active) setLoading(false); });
+    return () => { active = false; clearTimeout(timeout); };
+  }, [id, attempt]);
+  if (loading || error) return <ContentState loading={loading} error={error} onRetry={() => setAttempt(v => v + 1)} />;
+  if (!project) return <div className="p-12 text-center"><h1>Project not found</h1><a href="/#Portofolio" className="underline">Back to portfolio</a></div>;
 
   return (
     <div className="min-h-[100dvh] bg-[#030014] px-[2%] sm:px-0 relative overflow-hidden">
@@ -136,14 +131,14 @@ const ProjectDetails = () => {
           <div className="absolute top-0 -right-4 w-72 md:w-96 h-72 md:h-96 bg-red-500 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000" />
           <div className="absolute -bottom-8 left-20 w-72 md:w-96 h-72 md:h-96 bg-red-500 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000" />
         </div>
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02]" />
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
       </div>
 
       <div className="relative">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-16">
           <div className="flex items-center space-x-2 md:space-x-4 mb-8 md:mb-12 animate-fadeIn">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/#Portofolio")}
               className="group inline-flex items-center space-x-1.5 md:space-x-2 px-3 md:px-5 py-2 md:py-2.5 bg-white/5 backdrop-blur-xl rounded-xl text-white/90 hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-white/20 text-sm md:text-base"
             >
               <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 group-hover:-translate-x-1 transition-transform" />
@@ -227,7 +222,6 @@ const ProjectDetails = () => {
                   src={project.Img}
                   alt={project.Title}
                   className="w-full  object-cover transform transition-transform duration-700 will-change-transform group-hover:scale-105"
-                  onLoad={() => setIsImageLoaded(true)}
                 />
                 <div className="absolute inset-0 border-2 border-white/0 group-hover:border-white/10 transition-colors duration-300 rounded-2xl" />
               </div>
@@ -253,7 +247,7 @@ const ProjectDetails = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes blob {
           0% {
             transform: translate(0px, 0px) scale(1);

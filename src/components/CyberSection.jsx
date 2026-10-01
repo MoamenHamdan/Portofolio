@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useSiteSettings } from "../hooks/useSiteSettings";
+import { safeUrl } from "../utils/siteContent";
+import ContentState from "./ContentState";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Shield, Terminal, AlertTriangle, Lock, Wifi, Activity,
-  Bug, Globe, Zap, Eye, ExternalLink, CheckCircle, XCircle,
+  Shield, AlertTriangle, Lock, Wifi, Activity,
+  Bug, Eye, ExternalLink, CheckCircle, XCircle,
   Server, Database, Code, Target
 } from "lucide-react";
 
@@ -24,7 +27,7 @@ const LOG_LINES = [
 
 const LiveTerminal = () => {
   const [visibleLines, setVisibleLines] = useState([]);
-  const [idx, setIdx] = useState(0);
+  const [, setIdx] = useState(0);
   const containerRef = useRef(null);   // scroll INSIDE the box only
 
   useEffect(() => {
@@ -318,9 +321,14 @@ const AttackCard = ({ attack }) => {
 
 // ── TryHackMe Profile Widget ──────────────────────────────────────────
 const TryHackMeWidget = () => {
-  const THM_USER = "0xZeroTrace";
-  const profileUrl = `https://tryhackme.com/p/${THM_USER}`;
-  const badgeUrl = `https://tryhackme-badges.s3.amazonaws.com/${THM_USER}.png`;
+  const settings = useSiteSettings('socCredibility');
+  if (settings.loading || settings.error) return <ContentState {...settings} onRetry={settings.retry} />;
+  const data = settings.data || {};
+  const profileUrl = safeUrl(data.tryhackmeProfile);
+  const match = profileUrl.match(/^https:\/\/(?:www\.)?tryhackme\.com\/(?:p|r\/p)\/([a-zA-Z0-9_-]+)\/?$/);
+  const THM_USER = match?.[1];
+  const badgeUrl = THM_USER ? `https://tryhackme-badges.s3.amazonaws.com/${THM_USER}.png` : '';
+  if (!THM_USER) return null;
 
   return (
     <div className="relative bg-black/80 border border-[#c11111]/30 rounded-2xl p-6 overflow-hidden">
@@ -330,7 +338,7 @@ const TryHackMeWidget = () => {
       <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-[#c11111]/40 rounded-bl-2xl" />
       <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-[#c11111]/40 rounded-br-2xl" />
 
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex flex-wrap items-center gap-3 mb-5">
         <div className="w-10 h-10 rounded-xl bg-[#c11111]/20 flex items-center justify-center border border-[#c11111]/30">
           <Target className="w-5 h-5 text-[#c11111]" />
         </div>
@@ -349,6 +357,7 @@ const TryHackMeWidget = () => {
         <a href={profileUrl} target="_blank" rel="noopener noreferrer">
           <img
             src={badgeUrl}
+            loading="lazy"
             alt={`TryHackMe badge for ${THM_USER}`}
             className="rounded-xl border border-white/5 hover:border-[#c11111]/40 transition-all duration-300 hover:scale-105 max-w-full"
             onError={(e) => { e.target.style.display = "none"; }}
@@ -381,7 +390,7 @@ const ThreatStats = () => {
 
   useEffect(() => {
     const t = setInterval(() => {
-      setCounts(prev => prev.map((c, i) => {
+      setCounts(prev => prev.map((c) => {
         if (typeof c === "string") return c;
         return c + Math.floor(Math.random() * 5);
       }));
@@ -408,6 +417,18 @@ const ThreatStats = () => {
   );
 };
 
+const SOCProfile = () => {
+  const settings = useSiteSettings('socCredibility');
+  if (settings.loading || settings.error) return <ContentState {...settings} onRetry={settings.retry} />;
+  const data = settings.data || {};
+  const groups = [['siemTools','SIEM tools'],['incidentResponse','Incident response'],['networkMonitoring','Network monitoring'],['ticketingSystems','Ticketing systems'],['tryhackmeBadges','Badges'],['otherPlatforms','Other platforms']];
+  return <div className="space-y-6 mb-10">
+    {data.careerTransitionNote && <p className="text-gray-300 whitespace-pre-line">{data.careerTransitionNote}</p>}
+    <div className="grid sm:grid-cols-2 gap-4">{groups.map(([key,label]) => Array.isArray(data[key]) && data[key].length > 0 && <div key={key} className="border border-white/10 rounded-xl p-4"><h3 className="font-semibold mb-3">{label}</h3><ul className="flex flex-wrap gap-2">{data[key].map((item,i) => <li key={i} className="rounded bg-white/5 px-3 py-1 text-sm break-words">{item}</li>)}</ul></div>)}</div>
+    {Number(data.tryhackmeRooms) > 0 && <p className="text-sm text-gray-400">TryHackMe rooms completed: {data.tryhackmeRooms}</p>}
+  </div>;
+};
+
 // ── Main Export ───────────────────────────────────────────────────────
 const CyberSection = () => (
   <section className="py-16 md:py-24 px-[5%] md:px-[10%] text-white" id="Cyber">
@@ -421,9 +442,11 @@ const CyberSection = () => (
         Cyber Defense Center
       </h2>
       <p className="mt-3 text-gray-400 max-w-xl mx-auto text-sm md:text-base">
-        Real-world attacks I study, detect, and defend against — visualized live.
+        Interactive security demonstration with simulated alerts and counters.
       </p>
     </div>
+
+    <SOCProfile />
 
     {/* Alert ticker */}
     <div className="mb-8" data-aos="fade-up">
@@ -452,6 +475,7 @@ const CyberSection = () => (
       <div className="grid grid-cols-1 md:grid-cols-2 mb-8">
         <img
           src="/cyber-attacks.png"
+          loading="lazy" decoding="async"
           alt="Famous Cyber Attacks: SQL Injection, XSS, DDoS, Phishing"
           className="rounded-2xl border border-white/5 w-full object-cover"
         />

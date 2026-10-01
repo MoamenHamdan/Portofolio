@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { db, collection, getDocs, doc, getDoc } from "../../firebase";
+import { db, collection, getDocs } from "../../firebase";
 import { motion } from "framer-motion";
 import {
   FolderGit2, ShieldCheck, MessageSquare, BookOpen, Home, Cpu,
   Share2, Mail, Shield, ArrowUpRight, Activity, Zap, Terminal,
-  TrendingUp, Eye, Clock, CheckCircle2, AlertCircle, Users,
+  TrendingUp, Eye, Clock, CheckCircle2, AlertCircle,
 } from "lucide-react";
 
 // ── Animated counter ──────────────────────────────────────────────────

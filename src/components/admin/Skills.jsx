@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { db, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "../../firebase";
 import { compressImage } from "../../utils/imageUtils";
 import {
@@ -198,12 +198,12 @@ const Skills = () => {
     const [editSkill, setEditSkill] = useState(null);
     const [toast, setToast] = useState(null);
 
-    const showToast = (type, message) => {
+    const showToast = useCallback((type, message) => {
         setToast({ type, message });
         setTimeout(() => setToast(null), 4000);
-    };
+    }, []);
 
-    const fetchSkills = async () => {
+    const fetchSkills = useCallback(async () => {
         try {
             const snap = await getDocs(collection(db, "skills"));
             const data = snap.docs
@@ -215,9 +215,9 @@ const Skills = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showToast]);
 
-    useEffect(() => { fetchSkills(); }, []);
+    useEffect(() => { fetchSkills(); }, [fetchSkills]);
 
     const handleOpen = (s = null) => { setEditSkill(s); setModalOpen(true); };
 

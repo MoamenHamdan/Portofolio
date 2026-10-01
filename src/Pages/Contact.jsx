@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Share2, User, Mail, MessageSquare, Send } from "lucide-react";
-import { Link } from "react-router-dom";
 import SocialLinks from "../components/SocialLinks";
 import Komentar from "../components/Commentar";
 import { db, collection, addDoc, serverTimestamp } from "../firebase";
@@ -21,7 +20,7 @@ const ContactPage = () => {
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
-    AOS.init({ once: false });
+    AOS.init({ once: true });
   }, []);
 
   useEffect(() => {
@@ -37,7 +36,7 @@ const ContactPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (cooldown > 0) return;
+    if (cooldown > 0 || isSubmitting) return;
 
     // Client-side validation — mirrors Firestore rules constraints
     if (formData.name.trim().length < 2 || formData.name.length > 100) {
@@ -112,7 +111,7 @@ const ContactPage = () => {
         className="h-auto py-10 flex items-center justify-center px-[5%] md:px-0"
         id="Contact"
       >
-        <div className="container px-[1%] grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-[45%_55%] 2xl:grid-cols-[35%_65%] gap-12">
+        <div className="container px-[1%] grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-[minmax(0,45fr)_minmax(0,55fr)] 2xl:grid-cols-[minmax(0,35fr)_minmax(0,65fr)] gap-12">
           <div
             data-aos="fade-right"
             data-aos-duration="1200"
@@ -147,6 +146,7 @@ const ContactPage = () => {
                 <input
                   type="text"
                   name="name"
+                    aria-label="Name"
                   placeholder="Your Name"
                   value={formData.name}
                   onChange={handleChange}
@@ -163,6 +163,7 @@ const ContactPage = () => {
                 <Mail className="absolute left-4 top-4 w-5 h-5 text-gray-400 group-focus-within:text-[#ef4444] transition-colors" />
                 <input
                   type="email"
+                    aria-label="Email" maxLength={320}
                   name="email"
                   placeholder="Your Email"
                   value={formData.email}
@@ -180,6 +181,7 @@ const ContactPage = () => {
                 <MessageSquare className="absolute left-4 top-4 w-5 h-5 text-gray-400 group-focus-within:text-[#ef4444] transition-colors" />
                 <textarea
                   name="message"
+                    aria-label="Message"
                   placeholder="Your Message"
                   value={formData.message}
                   onChange={handleChange}

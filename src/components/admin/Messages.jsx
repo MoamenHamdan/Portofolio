@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { db, collection, getDocs, doc, deleteDoc, orderBy, query } from "../../firebase";
 import {
     Mail, Trash2, Clock, User, MessageSquare, Loader2,
@@ -21,12 +21,12 @@ const Messages = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [toast, setToast] = useState(null);
 
-    const showToast = (type, message) => {
+    const showToast = useCallback((type, message) => {
         setToast({ type, message });
         setTimeout(() => setToast(null), 4000);
-    };
+    }, []);
 
-    const fetchMessages = async () => {
+    const fetchMessages = useCallback(async () => {
         setLoading(true);
         try {
             const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
@@ -38,11 +38,11 @@ const Messages = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showToast]);
 
     useEffect(() => {
         fetchMessages();
-    }, []);
+    }, [fetchMessages]);
 
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this message?")) return;

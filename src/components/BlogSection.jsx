@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { db, collection, getDocs } from "../firebase";
 import {
   BookOpen, Calendar, Tag, X, ChevronLeft, ChevronRight,
-  ArrowUpRight, ExternalLink, Shield, Cpu
+  ArrowUpRight, ExternalLink, Shield
 } from "lucide-react";
 import AOS from "aos";
 
@@ -66,14 +66,15 @@ const ImageCarousel = ({ images }) => {
 
 // ── Post modal ────────────────────────────────────────────────────────
 const PostModal = ({ post, onClose }) => {
-  if (!post) return null;
-  const images = post.images?.filter(Boolean) || [];
-
   useEffect(() => {
+    if (!post) return undefined;
     const esc = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", esc);
     return () => document.removeEventListener("keydown", esc);
-  }, [onClose]);
+  }, [onClose, post]);
+
+  if (!post) return null;
+  const images = post.images?.filter(Boolean) || [];
 
   return (
     <motion.div

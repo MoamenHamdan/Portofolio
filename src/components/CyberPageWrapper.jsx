@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, memo } from "react";
+import { useEffect, useRef, memo } from "react";
 
 /* ─── Floating hex / binary particles ──────────────────────────────── */
 const CHARS = "01アイウエオАБВГ∑∏∆√≈≠∞ ABCDEF0123456789";
@@ -10,7 +10,9 @@ const HexParticles = memo(() => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    if (window.matchMedia("(max-width: 767px), (prefers-reduced-motion: reduce)").matches) return;
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     let animId;
 
     const resize = () => {
@@ -76,7 +78,7 @@ const ScanLine = memo(() => (
 
 /* ─── Corner HUD brackets ───────────────────────────────────────────── */
 const Corner = ({ pos }) => {
-  const base = "pointer-events-none fixed z-10 w-10 h-10";
+  const base = "pointer-events-none fixed z-10 w-10 h-10 hidden lg:block";
   const borders = {
     tl: "top-4 left-4 border-t-2 border-l-2",
     tr: "top-4 right-4 border-t-2 border-r-2",
@@ -118,7 +120,7 @@ const StatusBar = memo(() => {
   const now = new Date();
   const ts = now.toISOString().replace("T", " ").slice(0, 19) + " UTC";
   return (
-    <div className="pointer-events-none fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-1 text-[9px] font-mono border-b border-green-500/10 bg-black/30 backdrop-blur-sm">
+    <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-30 hidden lg:flex items-center justify-between px-4 py-1 text-[9px] font-mono border-b border-green-500/10 bg-black/30 backdrop-blur-sm">
       <span className="text-green-500/50">SOC-PORTFOLIO v2.1 // SESSION ACTIVE</span>
       <span className="text-green-500/40">{ts}</span>
       <span className="text-green-500/50">NODE: MH-SECURE-01</span>

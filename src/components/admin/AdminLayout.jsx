@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
-  LayoutDashboard, FolderKanban, Award, User, Home, Menu, X, LogOut,
+  LayoutDashboard, FolderKanban, Award, Home, Menu, X, LogOut,
   MessageSquare, Cpu, Mail, BookOpen, Shield, Share2
 } from 'lucide-react';
 

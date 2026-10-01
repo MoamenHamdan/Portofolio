@@ -1,6 +1,5 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, ArrowRight, Shield, Lock, AlertTriangle } from 'lucide-react';
+import { ExternalLink, ArrowRight, Shield, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Cybersecurity corner badge

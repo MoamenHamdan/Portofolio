@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { db, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "../../firebase";
 import { compressImage } from "../../utils/imageUtils";
 import {
-  Plus, X, Edit2, Trash2, Upload, Image, Loader2,
-  CheckCircle, AlertCircle, Save, BookOpen, Calendar, Tag, Info
+  Plus, X, Edit2, Trash2, Upload, Loader2,
+  CheckCircle, AlertCircle, Save, BookOpen, Calendar, Info
 } from "lucide-react";
 
 const defaultForm = {
@@ -306,12 +306,12 @@ const BlogPosts = () => {
   const [editPost, setEditPost] = useState(null);
   const [toast, setToast] = useState(null);
 
-  const showToast = (type, message) => {
+  const showToast = useCallback((type, message) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
-  };
+  }, []);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const snap = await getDocs(collection(db, "blogPosts"));
       const data = snap.docs
@@ -323,9 +323,9 @@ const BlogPosts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  useEffect(() => { fetchPosts(); }, []);
+  useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
   const handleOpen = (p = null) => { setEditPost(p); setModalOpen(true); };
 

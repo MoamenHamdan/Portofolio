@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { db, doc, getDoc, setDoc } from "../../firebase";
 import {
   Save, Plus, X, Loader2, CheckCircle, AlertCircle,
@@ -8,7 +8,7 @@ import {
 import { validateUrl } from "../../utils/adminGuard";
 
 // Curated list of popular social platforms with their colors
-export const PLATFORM_OPTIONS = [
+const PLATFORM_OPTIONS = [
   { value: "github",    label: "GitHub",       color: "#ffffff", gradient: "from-[#333] to-[#24292e]" },
   { value: "linkedin",  label: "LinkedIn",     color: "#0A66C2", gradient: "from-[#0A66C2] to-[#0077B5]" },
   { value: "instagram", label: "Instagram",    color: "#E4405F", gradient: "from-[#833AB4] via-[#E4405F] to-[#FCAF45]" },

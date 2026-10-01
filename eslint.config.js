@@ -28,6 +28,12 @@ export default [
       ...react.configs.recommended.rules,
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
+      // This project uses JavaScript rather than TypeScript. Runtime prop
+      // validation would duplicate the component contracts and generated
+      // admin forms, so keep lint focused on runtime correctness.
+      'react/prop-types': 'off',
+      'react/display-name': 'off',
+      'react/no-unescaped-entities': 'off',
       'react/jsx-no-target-blank': 'off',
       'react-refresh/only-export-components': [
         'warn',

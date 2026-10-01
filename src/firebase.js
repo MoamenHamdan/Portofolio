@@ -23,6 +23,7 @@ import {
   setPersistence,
   browserSessionPersistence,
 } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 
 // IMPORTANT — Firebase client-side config is NOT secret.
 // These values are visible in any deployed site's network requests by design —
@@ -43,6 +44,7 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 // ── Session persistence: browserSessionPersistence means the Firebase
 //    auth token is cleared when the browser tab/window is closed.
@@ -53,6 +55,7 @@ setPersistence(auth, browserSessionPersistence).catch(() => {});
 export {
   db,
   auth,
+  storage,
   // Firestore helpers re-exported so components don't need to import firebase/firestore directly
   collection,
   addDoc,

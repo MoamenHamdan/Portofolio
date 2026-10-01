@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { db, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "../../firebase";
 import { compressImage } from "../../utils/imageUtils";
 import {
-    Plus, X, Edit2, Trash2, Upload, Image, Star, Loader2,
-    CheckCircle, AlertCircle, Save, User, MessageSquare, Briefcase, Info
+    Plus, X, Edit2, Trash2, Upload, Star, Loader2,
+    CheckCircle, AlertCircle, Save, User, MessageSquare, Briefcase
 } from "lucide-react";
 
 const defaultForm = {
@@ -268,12 +268,12 @@ const Testimonials = () => {
     const [editItem, setEditItem] = useState(null);
     const [toast, setToast] = useState(null);
 
-    const showToast = (type, message) => {
+    const showToast = useCallback((type, message) => {
         setToast({ type, message });
         setTimeout(() => setToast(null), 4000);
-    };
+    }, []);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const snap = await getDocs(collection(db, "testimonials"));
             const data = snap.docs
@@ -285,9 +285,9 @@ const Testimonials = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showToast]);
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
     const handleOpen = (item = null) => { setEditItem(item); setModalOpen(true); };
 

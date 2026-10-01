@@ -1,24 +1,18 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { db, doc, getDoc, setDoc, collection, getCountFromServer } from "../../firebase";
 import { compressImage } from "../../utils/imageUtils";
 import {
     Save, Plus, X, Upload, Image, FileText, Type, Code2, Loader2,
-    CheckCircle, AlertCircle, User, Info, Hash, FolderGit2, ShieldCheck, Clock
+    CheckCircle, AlertCircle, User, Info, FolderGit2, ShieldCheck, Clock
 } from "lucide-react";
 
 // ── Firestore doc ref ────────────────────────────────────────────────
 const SETTINGS_DOC = (db) => doc(db, "siteSettings", "homeContent");
 
 const defaultData = {
-    typingWords: ["Semicolon Ambassador", "Bug-Hunter", "Tech Enthusiast"],
-    techStack: ["C#", "ASP.NET", "Entity Framework", "SQL Server"],
-    heroImageUrl: "",     // can be base64 OR external URL
-    aboutMeText:
-        "A backend developer focused on building secure and scalable web applications. I work mainly with .NET, C#, and databases. My goal is to write clean, efficient code and design APIs that are reliable and easy to maintain.",
-    cvUrl: "",            // external URL to CV (e.g. Google Drive link)
-    heroTitlePart1: "Back-End",
-    heroTitlePart2: "Developer",
-    yearsOfExperience: 1,
+    displayName: "Moamen Hamdan", heroDescription: "", aboutSubtitle: "",
+    aboutImageUrl: "", typingWords: [], techStack: [], heroImageUrl: "",
+    aboutMeText: "", cvUrl: "", heroTitlePart1: "", heroTitlePart2: "", yearsOfExperience: 0,
 };
 
 // ── UI helpers ────────────────────────────────────────────────────────
@@ -186,6 +180,7 @@ const HomeContent = () => {
     const [data, setData] = useState(defaultData);
     const [saving, setSaving] = useState(false);
     const [fetching, setFetching] = useState(true);
+    const [loadError, setLoadError] = useState(false);
     const [toast, setToast] = useState(null);
     const [liveCounts, setLiveCounts] = useState({ projects: null, certificates: null });
 
@@ -199,8 +194,9 @@ const HomeContent = () => {
         const load = async () => {
             try {
                 const snap = await getDoc(SETTINGS_DOC(db));
-                if (snap.exists()) setData({ ...defaultData, ...snap.data() });
+                if (snap.exists()) { const saved = snap.data(); setData({ ...defaultData, ...saved, aboutImageUrl: saved.aboutImageUrl ?? saved.heroImageUrl ?? "" }); }
             } catch (err) {
+                setLoadError(true);
                 showToast("error", "Load failed: " + err.message);
             } finally {
                 setFetching(false);
@@ -257,7 +253,7 @@ const HomeContent = () => {
                     <h1 className="text-2xl font-bold text-white">Home Content</h1>
                     <p className="text-gray-400 text-sm mt-1">Everything stored free in Firestore — no paid storage</p>
                 </div>
-                <button onClick={handleSave} disabled={saving}
+                <button onClick={handleSave} disabled={saving || loadError}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#b91c1c] to-[#ef4444] text-white text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-60 shadow-lg shadow-red-500/20">
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     {saving ? "Saving…" : "Save Changes"}
@@ -401,9 +397,19 @@ const HomeContent = () => {
                 </div>
             </SectionCard>
 
+            <SectionCard icon={User} title="Profile details" subtitle="These fields also control the public profile and navigation.">
+                {[["displayName", "Display name"], ["heroDescription", "Hero description"], ["aboutSubtitle", "About subtitle"]].map(([field, label]) => (
+                    <label key={field} className="block text-sm text-gray-300">{label}
+                        <textarea value={data[field] ?? ""} onChange={e => setData(d => ({ ...d, [field]: e.target.value }))} className="mt-2 w-full rounded-xl bg-white/5 border border-white/10 p-3" rows={field === "heroDescription" ? 3 : 1} />
+                    </label>
+                ))}
+                <ImagePicker currentUrl={data.aboutImageUrl} onPicked={url => setData(d => ({ ...d, aboutImageUrl: url }))} label="About profile image" />
+            </SectionCard>
+            {loadError && <p role="alert" className="text-red-300">Settings could not be loaded. Reload this page before saving to protect your existing content.</p>}
+
             {/* Bottom save */}
             <div className="flex justify-end pb-10">
-                <button onClick={handleSave} disabled={saving}
+                <button onClick={handleSave} disabled={saving || loadError}
                     className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#b91c1c] to-[#ef4444] text-white font-semibold hover:opacity-90 transition-all disabled:opacity-60 shadow-lg shadow-red-500/20">
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     {saving ? "Saving…" : "Save All Changes"}

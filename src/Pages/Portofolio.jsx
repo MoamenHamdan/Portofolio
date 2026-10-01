@@ -1,12 +1,13 @@
-import React, { useEffect, useState, useCallback } from "react";
+import ContentState from "../components/ContentState";
+import { useEffect, useState, useCallback } from "react";
 import { db, collection, getDocs } from "../firebase";
 import PropTypes from "prop-types";
-import SwipeableViews from "react-swipeable-views";
+
 import { useTheme } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
-import Typography from "@mui/material/Typography";
+
 import Box from "@mui/material/Box";
 import CardProject from "../components/CardProject";
 import TechStackIcon from "../components/TechStackIcon";
@@ -79,7 +80,7 @@ function TabPanel({ children, value, index, ...other }) {
     >
       {value === index && (
         <Box sx={{ p: { xs: 1, sm: 3 } }}>
-          <Typography>{children}</Typography>
+          {children}
         </Box>
       )}
     </div>
@@ -109,6 +110,8 @@ export default function FullWidthTabs() {
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [skills, setSkills] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllCertificates, setShowAllCertificates] = useState(false);
   const isMobile = window.innerWidth < 768;
@@ -117,11 +120,12 @@ export default function FullWidthTabs() {
   useEffect(() => {
     // Initialize AOS once
     AOS.init({
-      once: false, // This will make animations occur only once
+      once: true, // This will make animations occur only once
     });
   }, []);
 
   const fetchData = useCallback(async () => {
+    setLoading(true); setError(null);
     try {
       const projectCollection = collection(db, "projects");
       const certificateCollection = collection(db, "certificates");
@@ -153,11 +157,10 @@ export default function FullWidthTabs() {
       setCertificates(certificateData);
       setSkills(skillsData);
 
-      // Store in localStorage
-      localStorage.setItem("projects", JSON.stringify(projectData));
-      localStorage.setItem("certificates", JSON.stringify(certificateData));
     } catch (error) {
-      console.error("Error fetching data:", error);
+      setError(error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -272,11 +275,7 @@ export default function FullWidthTabs() {
           </Tabs>
         </AppBar>
 
-        <SwipeableViews
-          axis={theme.direction === "rtl" ? "x-reverse" : "x"}
-          index={value}
-          onChangeIndex={setValue}
-        >
+        {loading || error ? <ContentState loading={loading} error={error} onRetry={fetchData} /> : <div>
           <TabPanel value={value} index={0} dir={theme.direction}>
             <div className="container mx-auto flex justify-center items-center overflow-hidden">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-5">
@@ -346,7 +345,7 @@ export default function FullWidthTabs() {
               </div>
             </div>
           </TabPanel>
-        </SwipeableViews>
+        </div>}
       </Box>
     </div>
   );
