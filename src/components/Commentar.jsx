@@ -1,15 +1,43 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { getDocs, addDoc, collection, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase-comment';
+import {
+    db,
+    collection,
+    addDoc,
+    onSnapshot,
+    query,
+    orderBy,
+    serverTimestamp,
+} from '../firebase-comment';
 import { MessageCircle, UserCircle2, Loader2, AlertCircle, Send, ImagePlus, X } from 'lucide-react';
 import AOS from "aos";
 import "aos/dist/aos.css";
 
+// Compress image file to base64 JPEG using canvas (free — no Storage needed)
+const compressToBase64 = (file, maxPx = 400, quality = 0.65) =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onerror = reject;
+            img.onload = () => {
+                const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+                const canvas = document.createElement('canvas');
+                canvas.width  = Math.round(img.width  * scale);
+                canvas.height = Math.round(img.height * scale);
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+
 const Comment = memo(({ comment, formatDate, index }) => (
-    <div 
+    <div
         className="px-4 pt-4 pb-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group hover:shadow-lg hover:-translate-y-0.5"
-        
+
     >
         <div className="flex items-start gap-3 ">
             {comment.profileImage ? (
@@ -48,7 +76,10 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error }) => {
     const handleImageChange = useCallback((e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) return;
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Image must be under 2 MB');
+                return;
+            }
             setImageFile(file);
             const reader = new FileReader();
             reader.onloadend = () => setImagePreview(reader.result);
@@ -67,7 +98,7 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error }) => {
     const handleSubmit = useCallback((e) => {
         e.preventDefault();
         if (!newComment.trim() || !userName.trim()) return;
-        
+
         onSubmit({ newComment, userName, imageFile });
         setNewComment('');
         setImagePreview(null);
@@ -85,7 +116,7 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error }) => {
                 <input
                     type="text"
                     value={userName}
-                    onChange={(e) => setUserName(e.target.value)}z
+                    onChange={(e) => setUserName(e.target.value)}
                     placeholder="Enter your name"
                     className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                     required
@@ -197,7 +228,7 @@ const Komentar = () => {
     useEffect(() => {
         const commentsRef = collection(db, 'portfolio-comments');
         const q = query(commentsRef, orderBy('createdAt', 'desc'));
-        
+
         return onSnapshot(q, (querySnapshot) => {
             const commentsData = querySnapshot.docs.map((doc) => ({
                 id: doc.id,
@@ -207,32 +238,26 @@ const Komentar = () => {
         });
     }, []);
 
-    const uploadImage = useCallback(async (imageFile) => {
-        if (!imageFile) return null;
-        const storageRef = ref(storage, `profile-images/${Date.now()}_${imageFile.name}`);
-        await uploadBytes(storageRef, imageFile);
-        return getDownloadURL(storageRef);
-    }, []);
-
     const handleCommentSubmit = useCallback(async ({ newComment, userName, imageFile }) => {
         setError('');
         setIsSubmitting(true);
-        
+
         try {
-            const profileImageUrl = await uploadImage(imageFile);
+            // Compress image to base64 JPEG and store in Firestore (free — no Storage)
+            const profileImageBase64 = imageFile ? await compressToBase64(imageFile) : null;
             await addDoc(collection(db, 'portfolio-comments'), {
                 content: newComment,
                 userName,
-                profileImage: profileImageUrl,
+                profileImage: profileImageBase64,  // base64 string or null
                 createdAt: serverTimestamp(),
             });
-        } catch (error) {
+        } catch (err) {
             setError('Failed to post comment. Please try again.');
-            console.error('Error adding comment: ', error);
+            console.error('Error adding comment:', err);
         } finally {
             setIsSubmitting(false);
         }
-    }, [uploadImage]);
+    }, []);
 
     const formatDate = useCallback((timestamp) => {
         if (!timestamp) return '';
@@ -256,47 +281,47 @@ const Komentar = () => {
 
     return (
         <div className="w-full bg-gradient-to-b from-white/10 to-white/5 rounded-2xl overflow-hidden backdrop-blur-xl shadow-xl" data-aos="fade-up" data-aos-duration="1000">
-        <div className="p-6 border-b border-white/10" data-aos="fade-down" data-aos-duration="800">
-            <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-red-500/20">
-                    <MessageCircle className="w-6 h-6 text-red-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-white">
-                    Comments <span className="text-red-400">({comments.length})</span>
-                </h3>
-            </div>
-        </div>
-        <div className="p-6 space-y-6">
-            {error && (
-                <div className="flex items-center gap-2 p-4 text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl" data-aos="fade-in">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                    <p className="text-sm">{error}</p>
-                </div>
-            )}
-            
-            <div >
-                <CommentForm onSubmit={handleCommentSubmit} isSubmitting={isSubmitting} error={error} />
-            </div>
-
-            <div className="space-y-4 h-[300px] overflow-y-auto custom-scrollbar" data-aos="fade-up" data-aos-delay="200">
-                {comments.length === 0 ? (
-                    <div className="text-center py-8" data-aos="fade-in">
-                        <UserCircle2 className="w-12 h-12 text-red-400 mx-auto mb-3 opacity-50" />
-                        <p className="text-gray-400">No comments yet. Start the conversation!</p>
+            <div className="p-6 border-b border-white/10" data-aos="fade-down" data-aos-duration="800">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-red-500/20">
+                        <MessageCircle className="w-6 h-6 text-red-400" />
                     </div>
-                ) : (
-                    comments.map((comment, index) => (
-                        <Comment 
-                            key={comment.id} 
-                            comment={comment} 
-                            formatDate={formatDate}
-                            index={index}
-                        />
-                    ))
-                )}
+                    <h3 className="text-xl font-semibold text-white">
+                        Comments <span className="text-red-400">({comments.length})</span>
+                    </h3>
+                </div>
             </div>
-        </div>
-        <style jsx>{`
+            <div className="p-6 space-y-6">
+                {error && (
+                    <div className="flex items-center gap-2 p-4 text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl" data-aos="fade-in">
+                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                        <p className="text-sm">{error}</p>
+                    </div>
+                )}
+
+                <div >
+                    <CommentForm onSubmit={handleCommentSubmit} isSubmitting={isSubmitting} error={error} />
+                </div>
+
+                <div className="space-y-4 h-[300px] overflow-y-auto custom-scrollbar scroll-touch" data-aos="fade-up" data-aos-delay="200" style={{ overscrollBehavior: 'contain' }}>
+                    {comments.length === 0 ? (
+                        <div className="text-center py-8" data-aos="fade-in">
+                            <UserCircle2 className="w-12 h-12 text-red-400 mx-auto mb-3 opacity-50" />
+                            <p className="text-gray-400">No comments yet. Start the conversation!</p>
+                        </div>
+                    ) : (
+                        comments.map((comment, index) => (
+                            <Comment
+                                key={comment.id}
+                                comment={comment}
+                                formatDate={formatDate}
+                                index={index}
+                            />
+                        ))
+                    )}
+                </div>
+            </div>
+            <style>{`
             .custom-scrollbar::-webkit-scrollbar {
                 width: 6px;
             }
@@ -312,7 +337,7 @@ const Komentar = () => {
                 background: rgba(99, 102, 241, 0.7);
             }
         `}</style>
-    </div>
+        </div>
     );
 };
 

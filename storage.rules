@@ -1,0 +1,28 @@
+rules_version = '2';
+
+// ═══════════════════════════════════════════════════════════════════════
+// FIREBASE STORAGE RULES — Portfolio (moamenhamdanportfolio)
+//
+// Used by: Commentar.jsx — uploads profile images to profile-images/
+// ═══════════════════════════════════════════════════════════════════════
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // profile-images/ — anyone can upload a comment profile pic (public portfolio)
+    // Max file size: 2 MB. Only image types allowed.
+    match /profile-images/{imageId} {
+      allow read: if true;
+      allow write: if
+        request.resource.size <= 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null
+        && request.auth.uid == "Kr7OQbxdBVWPtbAhfZH2nZZpSKq2";
+    }
+
+    // Default deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

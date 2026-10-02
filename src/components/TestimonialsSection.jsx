@@ -4,6 +4,41 @@ import { db, collection, getDocs } from "../firebase";
 import { Star, Quote, ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import AOS from "aos";
 
+// ── Unknown-person SVG (used when no avatar or image fails to load) ────
+const UnknownAvatar = ({ size = 48 }) => (
+    <svg
+        width={size} height={size} viewBox="0 0 48 48"
+        className="rounded-full flex-shrink-0"
+        style={{
+            background: "linear-gradient(135deg,rgba(185,28,28,0.2),rgba(239,68,68,0.1))",
+            border: "2px solid rgba(255,255,255,0.12)"
+        }}
+    >
+        {/* head */}
+        <circle cx="24" cy="17" r="10" fill="rgba(239,68,68,0.4)" />
+        {/* shoulders */}
+        <ellipse cx="24" cy="40" rx="15" ry="11" fill="rgba(239,68,68,0.3)" />
+    </svg>
+);
+
+// ── Avatar with onError fallback ──────────────────────────────────────
+const AvatarImg = ({ src, name, size = 48 }) => {
+    const [failed, setFailed] = useState(false);
+    if (!src || failed) return <UnknownAvatar size={size} />;
+    return (
+        <img
+            src={src}
+            alt={name || "Client"}
+            onError={() => setFailed(true)}
+            width={size}
+            height={size}
+            className="rounded-full object-cover flex-shrink-0 border-2 border-white/10"
+            style={{ width: size, height: size }}
+        />
+    );
+};
+
+// ── Main Section ──────────────────────────────────────────────────────
 const TestimonialsSection = () => {
     const [testimonials, setTestimonials] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -13,7 +48,7 @@ const TestimonialsSection = () => {
 
     useEffect(() => {
         AOS.init({ once: true });
-        const fetch = async () => {
+        const fetchData = async () => {
             try {
                 const snap = await getDocs(collection(db, "testimonials"));
                 const data = snap.docs
@@ -26,7 +61,7 @@ const TestimonialsSection = () => {
                 setLoading(false);
             }
         };
-        fetch();
+        fetchData();
     }, []);
 
     const defaultTestimonials = [
@@ -35,23 +70,25 @@ const TestimonialsSection = () => {
             name: "Security Architect",
             role: "Project Mentorship",
             feedback: "Moamen has a sharp eye for analyzing security logs and implementing robust, clean infrastructure solutions. A promising SOC analyst candidate.",
-            rating: 5
-        }
+            rating: 5,
+        },
     ];
 
-    const displayTestimonials = testimonials.length > 0 ? testimonials : defaultTestimonials;
+    const displayTestimonials =
+        testimonials.length > 0 ? testimonials : defaultTestimonials;
 
     if (loading) return null;
 
-    const prev = () => setCurrent(c => (c - 1 + displayTestimonials.length) % displayTestimonials.length);
-    const next = () => setCurrent(c => (c + 1) % displayTestimonials.length);
+    const prev = () =>
+        setCurrent(c => (c - 1 + displayTestimonials.length) % displayTestimonials.length);
+    const next = () =>
+        setCurrent(c => (c + 1) % displayTestimonials.length);
 
-    // Touch/mouse swipe
-    const onPointerDown = (e) => {
+    const onPointerDown = e => {
         dragStartX.current = e.clientX ?? e.touches?.[0]?.clientX;
         setIsDragging(true);
     };
-    const onPointerUp = (e) => {
+    const onPointerUp = e => {
         if (!isDragging || dragStartX.current === null) return;
         const endX = e.clientX ?? e.changedTouches?.[0]?.clientX;
         const diff = dragStartX.current - endX;
@@ -77,81 +114,83 @@ const TestimonialsSection = () => {
                 </p>
             </div>
 
-            {/* Carousel */}
+            {/* Carousel wrapper */}
             <div
                 className="relative max-w-3xl mx-auto"
-                onMouseDown={onPointerDown} onMouseUp={onPointerUp}
-                onTouchStart={onPointerDown} onTouchEnd={onPointerUp}
+                onMouseDown={onPointerDown}
+                onMouseUp={onPointerUp}
+                onTouchStart={onPointerDown}
+                onTouchEnd={onPointerUp}
                 data-aos="zoom-in-up"
             >
-                <div className="relative overflow-hidden h-auto md:h-[350px]">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={current}
-                            initial={{ opacity: 0, x: 50 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -50 }}
-                            transition={{ duration: 0.4, ease: "easeInOut" }}
-                            className="w-full h-full"
-                        >
-                            <div className="relative bg-white/2 backdrop-blur-xl border border-white/5 hover:border-green-500/20 rounded-3xl p-8 md:p-12 shadow-2xl select-none h-full transition-colors duration-300">
-                                {/* Cyber corner brackets */}
-                                <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-green-500/30 rounded-tl-3xl" />
-                                <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-green-500/30 rounded-tr-3xl" />
-                                <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-green-500/30 rounded-bl-3xl" />
-                                <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-green-500/30 rounded-br-3xl" />
+                {/* Card — auto height, no clipping */}
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={current}
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -50 }}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                        className="w-full"
+                    >
+                        <div className="relative bg-white/[0.02] backdrop-blur-xl border border-white/5 hover:border-green-500/20 rounded-3xl p-8 md:p-12 shadow-2xl select-none transition-colors duration-300">
+                            {/* Corner brackets */}
+                            <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-green-500/30 rounded-tl-3xl" />
+                            <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-green-500/30 rounded-tr-3xl" />
+                            <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-green-500/30 rounded-bl-3xl" />
+                            <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-green-500/30 rounded-br-3xl" />
 
-                                {/* Gradient glow */}
-                                <div className="absolute -inset-px rounded-3xl bg-gradient-to-br from-[#b91c1c]/10 via-transparent to-[#ef4444]/10 pointer-events-none" />
+                            {/* Gradient glow overlay */}
+                            <div className="absolute -inset-px rounded-3xl bg-gradient-to-br from-[#b91c1c]/10 via-transparent to-[#ef4444]/10 pointer-events-none" />
 
-                                {/* Verified badge */}
-                                <div className="absolute top-4 left-8 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 border border-green-500/20 text-green-400 text-[9px] font-mono">
-                                    <Shield className="w-2 h-2" /> VERIFIED
-                                </div>
+                            {/* Verified badge */}
+                            <div className="absolute top-4 left-8 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 border border-green-500/20 text-green-400 text-[9px] font-mono">
+                                <Shield className="w-2 h-2" /> VERIFIED
+                            </div>
 
-                                {/* Quote icon */}
-                                <Quote className="absolute top-6 right-8 w-10 h-10 text-red-500/10" />
+                            {/* Decorative quote */}
+                            <Quote className="absolute top-6 right-8 w-10 h-10 text-red-500/10" />
 
+                            {/* ── Content ── */}
+                            <div className="flex flex-col gap-5 mt-4">
                                 {/* Stars */}
-                                <div className="flex gap-1 mb-5">
+                                <div className="flex gap-1">
                                     {[1, 2, 3, 4, 5].map(s => (
                                         <Star
                                             key={s}
-                                            className={`w-5 h-5 transition-colors ${s <= (item.rating || 5) ? "text-yellow-400" : "text-gray-800"}`}
+                                            className={`w-5 h-5 transition-colors ${s <= (item.rating || 5)
+                                                ? "text-yellow-400"
+                                                : "text-gray-800"}`}
                                             fill={s <= (item.rating || 5) ? "currentColor" : "none"}
                                         />
                                     ))}
                                 </div>
 
-                                {/* Feedback text */}
-                                <p className="text-gray-200 text-base md:text-lg leading-relaxed italic mb-8">
-                                    "{item.feedback}"
+                                {/* Feedback — full text, no line-clamp */}
+                                <p className="text-gray-200 text-base md:text-lg leading-relaxed italic">
+                                    &ldquo;{item.feedback}&rdquo;
                                 </p>
 
-                                {/* Client info */}
-                                <div className="flex items-center gap-4 mt-auto">
-                                    {item.avatar ? (
-                                        <img
-                                            src={item.avatar}
-                                            alt={item.name}
-                                            className="w-12 h-12 rounded-full object-cover border-2 border-white/10 flex-shrink-0"
-                                        />
-                                    ) : (
-                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#b91c1c]/30 to-[#ef4444]/20 flex items-center justify-center text-white text-lg font-bold flex-shrink-0 border border-white/5">
-                                            {item.name?.[0]?.toUpperCase() || "?"}
-                                        </div>
-                                    )}
-                                    <div>
-                                        <p className="text-white font-semibold">{item.name}</p>
-                                        {item.role && <p className="text-gray-500 text-sm">{item.role}</p>}
+                                {/* Client info — always fully visible */}
+                                <div className="flex items-center gap-4 pt-4 border-t border-white/10">
+                                    <AvatarImg src={item.avatar} name={item.name} size={52} />
+                                    <div className="min-w-0">
+                                        <p className="text-white font-semibold text-base leading-tight">
+                                            {item.name || "Anonymous"}
+                                        </p>
+                                        {item.role && (
+                                            <p className="text-gray-400 text-sm mt-0.5">
+                                                {item.role}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
+                        </div>
+                    </motion.div>
+                </AnimatePresence>
 
-                {/* Navigation */}
+                {/* Navigation dots + arrows */}
                 {displayTestimonials.length > 1 && (
                     <div className="flex items-center justify-center gap-4 mt-8">
                         <button
@@ -161,7 +200,6 @@ const TestimonialsSection = () => {
                             <ChevronLeft className="w-5 h-5" />
                         </button>
 
-                        {/* Dots */}
                         <div className="flex gap-2">
                             {displayTestimonials.map((_, i) => (
                                 <button
@@ -169,8 +207,7 @@ const TestimonialsSection = () => {
                                     onClick={() => setCurrent(i)}
                                     className={`transition-all duration-300 rounded-full ${i === current
                                         ? "w-6 h-2 bg-gradient-to-r from-[#b91c1c] to-[#ef4444]"
-                                        : "w-2 h-2 bg-white/20 hover:bg-white/40"
-                                        }`}
+                                        : "w-2 h-2 bg-white/20 hover:bg-white/40"}`}
                                 />
                             ))}
                         </div>

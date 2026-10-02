@@ -102,6 +102,65 @@ function a11yProps(index) {
 // techStacks is now loaded from Firestore (Skills collection)
 // Admin can manage these from the admin panel → Tech Stack / Skills
 
+// Smart projects grid: always pairs, lone last item centered
+const ProjectsGrid = ({ projects }) => {
+  const count = projects.length;
+
+  // Choose column count based on total
+  // ≤4 → 2 cols, ≥6 → up to 3 cols (but still balanced)
+  // Odd last item → full row centered
+  const hasOdd = count % 2 !== 0;
+  const mainItems = hasOdd ? projects.slice(0, count - 1) : projects;
+  const lastItem = hasOdd ? projects[count - 1] : null;
+
+  // For 6+ projects use 3 cols if count divisible by 3, else 2 cols
+  const useThreeCols = count >= 6 && count % 3 === 0;
+
+  const gridClass = useThreeCols
+    ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+    : "grid grid-cols-1 md:grid-cols-2 gap-5";
+
+  return (
+    <div>
+      <div className={gridClass}>
+        {mainItems.map((project, index) => (
+          <div
+            key={project.id || index}
+            data-aos={index % 2 === 0 ? "fade-up-right" : "fade-up-left"}
+            data-aos-duration="1000"
+          >
+            <CardProject
+              Img={project.Img}
+              Title={project.Title}
+              Description={project.Description}
+              Link={project.Link}
+              id={project.id}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Last lone item — centered on its own row */}
+      {lastItem && (
+        <div className="flex justify-center mt-5">
+          <div
+            className="w-full md:w-[calc(50%-10px)]"
+            data-aos="fade-up"
+            data-aos-duration="1000"
+          >
+            <CardProject
+              Img={lastItem.Img}
+              Title={lastItem.Title}
+              Description={lastItem.Description}
+              Link={lastItem.Link}
+              id={lastItem.id}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function FullWidthTabs() {
   const theme = useTheme();
@@ -278,24 +337,8 @@ export default function FullWidthTabs() {
           onChangeIndex={setValue}
         >
           <TabPanel value={value} index={0} dir={theme.direction}>
-            <div className="container mx-auto flex justify-center items-center overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-5">
-                {displayedProjects.map((project, index) => (
-                  <div
-                    key={project.id || index}
-                    data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                    data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
-                  >
-                    <CardProject
-                      Img={project.Img}
-                      Title={project.Title}
-                      Description={project.Description}
-                      Link={project.Link}
-                      id={project.id}
-                    />
-                  </div>
-                ))}
-              </div>
+            <div className="container mx-auto overflow-hidden">
+              <ProjectsGrid projects={displayedProjects} />
             </div>
             {projects.length > initialItems && (
               <div className="mt-6 w-full flex justify-start">
@@ -308,15 +351,21 @@ export default function FullWidthTabs() {
           </TabPanel>
 
           <TabPanel value={value} index={1} dir={theme.direction}>
-            <div className="container mx-auto flex justify-center items-center overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-3 md:gap-5 gap-4">
+            <div className="container mx-auto overflow-hidden">
+              {/* Always 2 certificates per row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {displayedCertificates.map((certificate, index) => (
                   <div
                     key={index}
-                    data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                    data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
+                    data-aos={index % 2 === 0 ? "fade-up-right" : "fade-up-left"}
+                    data-aos-duration="1000"
                   >
-                    <Certificate ImgSertif={certificate.image || certificate.Img} />
+                    <Certificate
+                      ImgSertif={certificate.image || certificate.Img}
+                      name={certificate.name || certificate.Name || certificate.title || certificate.Title}
+                      company={certificate.company || certificate.Company || certificate.issuer || certificate.Issuer}
+                      description={certificate.description || certificate.Description}
+                    />
                   </div>
                 ))}
               </div>

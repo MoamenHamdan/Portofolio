@@ -13,6 +13,7 @@ const defaultData = {
     typingWords: ["Semicolon Ambassador", "Bug-Hunter", "Tech Enthusiast"],
     techStack: ["C#", "ASP.NET", "Entity Framework", "SQL Server"],
     heroImageUrl: "",     // can be base64 OR external URL
+    aboutImageUrl: "",    // profile photo shown in the About section
     aboutMeText:
         "A backend developer focused on building secure and scalable web applications. I work mainly with .NET, C#, and databases. My goal is to write clean, efficient code and design APIs that are reliable and easy to maintain.",
     cvUrl: "",            // external URL to CV (e.g. Google Drive link)
@@ -318,6 +319,16 @@ const HomeContent = () => {
                     currentUrl={data.heroImageUrl}
                     onPicked={(url) => setData(d => ({ ...d, heroImageUrl: url }))}
                     hint="Image is compressed & stored in Firestore for free. Large images — paste an Imgur/PostImages URL instead."
+                />
+            </SectionCard>
+
+            {/* About Section Image */}
+            <SectionCard icon={Image} title="About Section Photo"
+                subtitle="The circular profile photo shown in the About Me section">
+                <ImagePicker
+                    currentUrl={data.aboutImageUrl}
+                    onPicked={(url) => setData(d => ({ ...d, aboutImageUrl: url }))}
+                    hint="This replaces the /about.jpg fallback. Upload or paste an external URL. Image is compressed & stored in Firestore for free."
                 />
             </SectionCard>
 

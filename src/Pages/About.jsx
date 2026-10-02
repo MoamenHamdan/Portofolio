@@ -41,7 +41,7 @@ const Header = memo(() => (
   </div>
 ));
 
-const ProfileImage = memo(() => (
+const ProfileImage = memo(({ src }) => (
   <div className="flex justify-end items-center sm:p-12 sm:py-0 sm:pb-0 p-0 py-2 pb-2">
     <div className="relative animate-float-updown group" style={{ display: 'inline-block' }}>
       {/* Glowing gradient backgrounds */}
@@ -53,14 +53,14 @@ const ProfileImage = memo(() => (
       <div className="relative">
         <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-full overflow-hidden border-4 border-gradient-to-r from-[#ef4444] to-[#991b1b] transition-all duration-500 shadow-[0_0_40px_rgba(120,119,198,0.3)] group-hover:scale-110 group-hover:shadow-[0_0_80px_20px_rgba(139,92,246,0.35)]">
           <img
-            src="/about.jpg"
+            src={src || "/about.jpg"}
             alt="Profile"
             className="w-full h-full object-cover transition-all duration-700"
             loading="lazy"
           />
         </div>
       </div>
-      <style jsx>{`
+      <style>{`
         @keyframes float-updown {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-18px); }
@@ -146,6 +146,7 @@ const AboutPage = () => {
     "A backend developer focused on building secure and scalable web applications. I work mainly with .NET, C#, and databases. My goal is to write clean, efficient code and design APIs that are reliable and easy to maintain. Every line I write aims to solve real problems and add real value"
   );
   const [cvUrl, setCvUrl] = useState("/moamencv.pdf");
+  const [aboutImageUrl, setAboutImageUrl] = useState("/about.jpg");
 
   // Stats fetched directly from Firestore — no counting needed
   const [totalProjects, setTotalProjects] = useState(0);
@@ -163,6 +164,7 @@ const AboutPage = () => {
           if (data.aboutMeText) setAboutMeText(data.aboutMeText);
           if (data.cvUrl) setCvUrl(data.cvUrl);
           if (data.yearsOfExperience !== undefined) setYearsOfExperience(Number(data.yearsOfExperience));
+          if (data.aboutImageUrl) setAboutImageUrl(data.aboutImageUrl);
         }
 
         // Auto-count projects and certificates directly from Firestore
@@ -320,7 +322,7 @@ const AboutPage = () => {
             </div>
           </div>
 
-          <ProfileImage />
+          <ProfileImage src={aboutImageUrl} />
         </div>
 
         <a href="#Portofolio">
