@@ -2,49 +2,12 @@ rules_version = '2';
 
 // ═══════════════════════════════════════════════════════════════════════
 // FIRESTORE SECURITY RULES  — Portfolio (moamenhamdanportfolio)
-//
-// Design rationale (SOC interview-ready comments):
-//
-//  1.  PUBLIC DATA (projects, skills, certificates, testimonials,
-//      siteSettings, blogPosts) — any visitor can READ so the portfolio
-//      renders without auth. Nobody can WRITE unless they are the admin.
-//
-//  2.  ADMIN IDENTITY — we compare request.auth.uid against a hard-coded
-//      UID constant rather than checking any role stored in Firestore.
-//      Storing roles in Firestore creates a privilege-escalation risk:
-//      a misconfigured write rule could let a user promote themselves.
-//      The UID comes from Firebase Auth's verified JWT — not spoofable.
-//      Replace ADMIN_UID below with your actual Firebase Auth UID.
-//
-//  3.  messages COLLECTION — intentionally unauthenticated WRITE so the
-//      public contact form works without forcing visitors to log in.
-//      We mitigate abuse via field validation (required fields, type
-//      checks, length limits) so a malicious actor cannot flood Firestore
-//      with oversized documents or omit required fields.
-//      Schema:  name (string ≤100), email (string ≤320), message (string
-//               ≤2000), timestamp (Firestore server timestamp).
-//      Only the admin can READ (fetch) or DELETE messages.
-//
-//  4.  WHY NOT rate-limit here? — Firestore rules cannot enforce
-//      per-user write frequency natively (no stateful counters).
-//      Rate-limiting is done client-side (60-second cooldown in Contact.jsx)
-//      which is a UX-layer deterrent, not a hard security guarantee.
-//      For hard rate-limiting on Spark plan, use Firestore write counts
-//      checked via a Cloud Function — but Cloud Functions require Blaze.
-//      Accept this trade-off: the field-size validation prevents the worst
-//      abuse (large payloads), and Firebase Auth + rules stop all writes
-//      to protected collections.
-//
-//  Spark plan compliance: no Cloud Functions, Extensions, or external
-//  calls required.  Rules evaluation is free tier.
 // ═══════════════════════════════════════════════════════════════════════
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ── Helper: is the caller the portfolio admin? ────────────────────
-    // REPLACE the UID string below with YOUR Firebase Auth UID.
-    // Find it: Firebase Console → Authentication → Users → copy UID.
     function isAdmin() {
       return request.auth != null
           && request.auth.uid == "Kr7OQbxdBVWPtbAhfZH2nZZpSKq2";
@@ -81,9 +44,6 @@ service cloud.firestore {
     }
 
     match /siteSettings/{docId} {
-      // siteSettings/{docId} stores hero content, about text, SOC
-      // credibility data, social links, etc. — all readable so public pages hydrate.
-      // socialLinks document is a sub-document within siteSettings.
       allow read: if true;
       allow write, delete: if isAdmin();
     }
@@ -95,39 +55,40 @@ service cloud.firestore {
 
     // ══════════════════════════════════════════════════════════════════
     // CONTACT FORM — messages collection
-    //
-    // Anyone can CREATE (public contact form), nobody else can read/delete
-    // except the admin.  Schema is validated on every create.
     // ══════════════════════════════════════════════════════════════════
     match /messages/{docId} {
-      // Public: submit a contact message
       allow create: if
-        // Required fields must be present
         request.resource.data.keys().hasAll(['name', 'email', 'message', 'timestamp'])
-        // name: non-empty string, max 100 chars (mirrors Contact.jsx validation)
         && isValidString(request.resource.data.name, 100)
         && request.resource.data.name.size() >= 2
-        // email: non-empty string, max 320 chars (RFC 5321 max)
         && isValidString(request.resource.data.email, 320)
-        // message: non-empty, min 10 chars (mirrors Contact.jsx), max 2000
         && isValidString(request.resource.data.message, 2000)
         && request.resource.data.message.size() >= 10
-        // No extra fields allowed — prevents schema pollution
         && request.resource.data.keys().size() == 4;
 
-      // Only admin can view or delete messages (inbox)
       allow read, delete: if isAdmin();
-
-      // Messages are immutable once sent — no updates allowed
       allow update: if false;
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // COMMENTS — if used by Komentar component
+    // COMMENTS — portfolio-comments collection
+    // Fix: serverTimestamp() cannot be validated before write,
+    // so we only validate userName and content fields.
+    // profileImage is optional (base64 or Storage URL or null).
     // ══════════════════════════════════════════════════════════════════
+    match /portfolio-comments/{docId} {
+      allow read: if true;
+      allow create: if
+        request.resource.data.keys().hasAll(['userName', 'content', 'createdAt'])
+        && isValidString(request.resource.data.userName, 100)
+        && isValidString(request.resource.data.content, 2000);
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // Legacy comments collection (unused but kept for safety)
     match /comments/{docId} {
       allow read: if true;
-      // Allow anyone to post a comment (same pattern as messages)
       allow create: if
         request.resource.data.keys().hasAll(['name', 'text', 'timestamp'])
         && isValidString(request.resource.data.name, 100)
@@ -136,8 +97,7 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // DEFAULT DENY — deny everything not matched above.
-    // This is implicit in Firestore but made explicit for clarity.
+    // DEFAULT DENY
     // ══════════════════════════════════════════════════════════════════
     match /{document=**} {
       allow read, write: if false;

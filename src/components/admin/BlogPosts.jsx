@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { db, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "../../firebase";
 import { compressImage } from "../../utils/imageUtils";
 import {
-  Plus, X, Edit2, Trash2, Upload, Image, Loader2,
-  CheckCircle, AlertCircle, Save, BookOpen, Calendar, Tag, Info
+  Plus, X, Edit2, Trash2, Upload, Loader2,
+  CheckCircle, AlertCircle, Save, BookOpen, Calendar, Info, Eye, EyeOff
 } from "lucide-react";
 
 const defaultForm = {
@@ -13,6 +13,7 @@ const defaultForm = {
   date: "",
   tags: [],
   order: 0,
+  published: true,
 };
 
 // ── Toast ─────────────────────────────────────────────────────────────
@@ -142,7 +143,15 @@ const BlogModal = ({ isOpen, onClose, onSaved, editPost }) => {
   useEffect(() => {
     if (isOpen) {
       setForm(editPost
-        ? { title: editPost.title || "", description: editPost.description || "", images: editPost.images || [], date: editPost.date || "", tags: editPost.tags || [], order: editPost.order ?? 0 }
+        ? {
+            title: editPost.title || "",
+            description: editPost.description || "",
+            images: editPost.images || [],
+            date: editPost.date || "",
+            tags: editPost.tags || [],
+            order: editPost.order ?? 0,
+            published: editPost.published !== false, // default true
+          }
         : defaultForm
       );
     }
@@ -216,6 +225,27 @@ const BlogModal = ({ isOpen, onClose, onSaved, editPost }) => {
             </div>
           </div>
 
+          {/* Publish toggle */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+            <div>
+              <p className="text-sm font-medium text-white">Visibility</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {form.published ? "Visible on the public portfolio" : "Hidden from visitors"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm(f => ({ ...f, published: !f.published }))}
+              className={`relative w-12 h-6 rounded-full transition-all duration-300 focus:outline-none ${
+                form.published ? "bg-gradient-to-r from-green-600 to-green-500" : "bg-white/10"
+              }`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ${
+                form.published ? "translate-x-6" : "translate-x-0"
+              }`} />
+            </button>
+          </div>
+
           {/* Tags */}
           <TagInput label="Tags"
             tags={form.tags}
@@ -250,53 +280,80 @@ const BlogModal = ({ isOpen, onClose, onSaved, editPost }) => {
 };
 
 // ── Blog Card ─────────────────────────────────────────────────────────
-const BlogCard = ({ post, onEdit, onDelete }) => (
-  <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden group hover:border-white/20 transition-all duration-200">
-    <div className="relative h-40 bg-gray-900 overflow-hidden">
-      {post.images?.[0] ? (
-        <img src={post.images[0]} alt={post.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          loading="lazy" />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-gray-700">
-          <BookOpen className="w-10 h-10" />
+const BlogCard = ({ post, onEdit, onDelete, onTogglePublish }) => {
+  const isPublished = post.published !== false;
+  return (
+    <div className={`relative bg-white/5 border rounded-2xl overflow-hidden group transition-all duration-200 ${
+      isPublished ? "border-white/10 hover:border-white/20" : "border-dashed border-white/15 opacity-70 hover:opacity-90"
+    }`}>
+      {/* Published badge */}
+      <div className={`absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+        isPublished
+          ? "bg-green-500/20 border-green-500/30 text-green-300"
+          : "bg-gray-500/20 border-gray-500/30 text-gray-400"
+      }`}>
+        {isPublished ? <Eye className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
+        {isPublished ? "Live" : "Hidden"}
+      </div>
+
+      {/* Image — uniform 16:9 */}
+      <div className="relative w-full bg-gray-900 overflow-hidden" style={{ paddingTop: '56.25%' }}>
+        {post.images?.[0] ? (
+          <img src={post.images[0]} alt={post.title}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-gray-700">
+            <BookOpen className="w-10 h-10" />
+          </div>
+        )}
+        {post.images?.length > 1 && (
+          <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+            +{post.images.length - 1} more
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 space-y-2">
+        <h3 className="font-semibold text-white text-sm line-clamp-2">{post.title || "Untitled"}</h3>
+        <p className="text-gray-400 text-xs line-clamp-2">{post.description}</p>
+        {post.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {post.tags.slice(0, 3).map((t, i) => (
+              <span key={i} className="px-2 py-0.5 rounded-full bg-[#b91c1c]/15 text-red-300 text-xs border border-[#b91c1c]/20">{t}</span>
+            ))}
+          </div>
+        )}
+        {post.date && (
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <Calendar className="w-3 h-3" />
+            {new Date(post.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          </div>
+        )}
+        <div className="flex gap-2 pt-1">
+          {/* Publish toggle */}
+          <button onClick={() => onTogglePublish(post)}
+            className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium border transition-all ${
+              isPublished
+                ? "text-gray-400 bg-white/5 hover:bg-white/10 border-white/10"
+                : "text-green-300 bg-green-500/10 hover:bg-green-500/20 border-green-500/20"
+            }`}>
+            {isPublished ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            {isPublished ? "Hide" : "Show"}
+          </button>
+          <button onClick={() => onEdit(post)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all">
+            <Edit2 className="w-3.5 h-3.5" /> Edit
+          </button>
+          <button onClick={() => onDelete(post.id)}
+            className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
         </div>
-      )}
-      {post.images?.length > 1 && (
-        <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-          +{post.images.length - 1} more
-        </div>
-      )}
-    </div>
-    <div className="p-4 space-y-2">
-      <h3 className="font-semibold text-white text-sm line-clamp-2">{post.title || "Untitled"}</h3>
-      <p className="text-gray-400 text-xs line-clamp-2">{post.description}</p>
-      {post.tags?.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {post.tags.slice(0, 3).map((t, i) => (
-            <span key={i} className="px-2 py-0.5 rounded-full bg-[#b91c1c]/15 text-red-300 text-xs border border-[#b91c1c]/20">{t}</span>
-          ))}
-        </div>
-      )}
-      {post.date && (
-        <div className="flex items-center gap-1 text-xs text-gray-500">
-          <Calendar className="w-3 h-3" />
-          {new Date(post.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-        </div>
-      )}
-      <div className="flex gap-2 pt-1">
-        <button onClick={() => onEdit(post)}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all">
-          <Edit2 className="w-3.5 h-3.5" /> Edit
-        </button>
-        <button onClick={() => onDelete(post.id)}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all">
-          <Trash2 className="w-3.5 h-3.5" /> Delete
-        </button>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ── MAIN ──────────────────────────────────────────────────────────────
 const BlogPosts = () => {
@@ -340,6 +397,17 @@ const BlogPosts = () => {
     }
   };
 
+  const handleTogglePublish = async (post) => {
+    const newVal = post.published === false ? true : false;
+    try {
+      await updateDoc(doc(db, "blogPosts", post.id), { published: newVal });
+      setPosts(prev => prev.map(p => p.id === post.id ? { ...p, published: newVal } : p));
+      showToast("success", newVal ? "Post is now live!" : "Post hidden from visitors.");
+    } catch (err) {
+      showToast("error", "Update failed: " + err.message);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -375,7 +443,7 @@ const BlogPosts = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {posts.map(p => (
-            <BlogCard key={p.id} post={p} onEdit={handleOpen} onDelete={handleDelete} />
+            <BlogCard key={p.id} post={p} onEdit={handleOpen} onDelete={handleDelete} onTogglePublish={handleTogglePublish} />
           ))}
         </div>
       )}

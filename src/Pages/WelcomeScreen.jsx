@@ -79,18 +79,18 @@ const ResolveTyper = ({ wrong, right, onDone }) => {
   useEffect(() => {
     if (phase === "typing") {
       if (idx < wrong.length) {
-        const t = setTimeout(() => { setText(wrong.slice(0, idx + 1)); setIdx(i => i + 1); }, 100);
+        const t = setTimeout(() => { setText(wrong.slice(0, idx + 1)); setIdx(i => i + 1); }, 40);
         return () => clearTimeout(t);
       } else {
-        setTimeout(() => setPhase("error"), 500);
+        setTimeout(() => setPhase("error"), 150);
       }
     }
     if (phase === "error") {
-      setTimeout(() => setPhase("fixing"), 900);
+      setTimeout(() => setPhase("fixing"), 250);
     }
     if (phase === "fixing") {
       setText(right);
-      setTimeout(() => { setPhase("done"); onDone?.(); }, 600);
+      setTimeout(() => { setPhase("done"); onDone?.(); }, 200);
     }
   }, [phase, idx]);
 
@@ -159,14 +159,14 @@ const ScanBar = ({ label, duration, color = "#22c55e", delay = 0, onDone }) => {
 
 /* ─── Log line component ─────────────────────────────────────────── */
 const LOG_LINES = [
-  { t: 500,  c: "text-yellow-400", m: "[WARN]  Visitor identified — initiating threat assessment..." },
-  { t: 1500, c: "text-red-400",    m: "[INFO]  IP geolocation lookup... complete" },
-  { t: 2500, c: "text-green-400",  m: "[OK]    Firewall rules verified — no active threats" },
-  { t: 3500, c: "text-yellow-400", m: "[WARN]  Unknown identity detected — cross-referencing database..." },
-  { t: 4500, c: "text-red-400",    m: "[CRIT]  Name mismatch found in record — HAMAN ≠ HAMDAN" },
-  { t: 5500, c: "text-yellow-400", m: "[PATCH] Applying correction to identity record..." },
-  { t: 6500, c: "text-green-400",  m: "[OK]    Identity resolved: MOAMEN HAMDAN — SOC Analyst" },
-  { t: 7500, c: "text-green-400",  m: "[INFO]  Clearance granted — loading portfolio..." },
+  { t: 150,  c: "text-yellow-400", m: "[WARN]  Visitor identified — initiating threat assessment..." },
+  { t: 400,  c: "text-red-400",    m: "[INFO]  IP geolocation lookup... complete" },
+  { t: 700,  c: "text-green-400",  m: "[OK]    Firewall rules verified — no active threats" },
+  { t: 1000, c: "text-yellow-400", m: "[WARN]  Unknown identity detected — cross-referencing database..." },
+  { t: 1300, c: "text-red-400",    m: "[CRIT]  Name mismatch found in record — HAMAN ≠ HAMDAN" },
+  { t: 1600, c: "text-yellow-400", m: "[PATCH] Applying correction to identity record..." },
+  { t: 1900, c: "text-green-400",  m: "[OK]    Identity resolved: MOAMEN HAMDAN — SOC Analyst" },
+  { t: 2200, c: "text-green-400",  m: "[INFO]  Clearance granted — loading portfolio..." },
 ];
 
 /* ─── MAIN ──────────────────────────────────────────────────────── */
@@ -187,8 +187,8 @@ const WelcomeScreen = ({ onLoadingComplete }) => {
     // exit loading screen
     const exitTimer = setTimeout(() => {
       setIsLoading(false);
-      setTimeout(() => onLoadingComplete?.(), 700);
-    }, 8500);
+      setTimeout(() => onLoadingComplete?.(), 300);
+    }, 2800);
 
     return () => clearTimeout(exitTimer);
   }, [onLoadingComplete]);
@@ -262,11 +262,11 @@ const WelcomeScreen = ({ onLoadingComplete }) => {
                 <div className="p-5 space-y-5">
                   {/* Scan bars */}
                   <div className="space-y-3">
-                    <ScanBar label="◦ IDENTITY SCAN"      duration={1500} color="#ef4444" delay={500}  />
-                    <ScanBar label="◦ THREAT ASSESSMENT"  duration={2000} color="#f97316" delay={1000}  />
-                    <ScanBar label="◦ CREDENTIAL CHECK"   duration={1500} color="#eab308" delay={2500} />
-                    <ScanBar label="◦ DATABASE LOOKUP"    duration={2000} color="#22c55e" delay={3500} />
-                    <ScanBar label="◦ CLEARANCE VERIFY"   duration={1000} color="#22c55e" delay={5500} onDone={() => setPhase(1)} />
+                    <ScanBar label="◦ IDENTITY SCAN"      duration={400} color="#ef4444" delay={150}  />
+                    <ScanBar label="◦ THREAT ASSESSMENT"  duration={600} color="#f97316" delay={300}  />
+                    <ScanBar label="◦ CREDENTIAL CHECK"   duration={400} color="#eab308" delay={700} />
+                    <ScanBar label="◦ DATABASE LOOKUP"    duration={600} color="#22c55e" delay={1000} />
+                    <ScanBar label="◦ CLEARANCE VERIFY"   duration={300} color="#22c55e" delay={1600} onDone={() => setPhase(1)} />
                   </div>
 
                   {/* Identity resolution */}

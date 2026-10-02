@@ -70,9 +70,17 @@ const PostModal = ({ post, onClose }) => {
   const images = post.images?.filter(Boolean) || [];
 
   useEffect(() => {
+    // Lock page scroll while modal is open
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const esc = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", esc);
-    return () => document.removeEventListener("keydown", esc);
+
+    return () => {
+      document.removeEventListener("keydown", esc);
+      document.body.style.overflow = prev;
+    };
   }, [onClose]);
 
   return (
@@ -81,6 +89,7 @@ const PostModal = ({ post, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm px-4 py-8"
+      style={{ overscrollBehavior: 'contain' }}
       onClick={onClose}
     >
       <motion.div
@@ -90,6 +99,7 @@ const PostModal = ({ post, onClose }) => {
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-[#060b1f] border border-white/10 rounded-3xl shadow-2xl"
+        style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
       >
         {/* Close */}
         <button
@@ -147,29 +157,37 @@ const PostModal = ({ post, onClose }) => {
 // ── Post card ─────────────────────────────────────────────────────────
 const PostCard = ({ post, onClick }) => {
   const coverImg = post.images?.find(Boolean);
+  // Disable whileHover on touch devices to prevent scroll jank
+  const [isTouch, setIsTouch] = React.useState(false);
+  React.useEffect(() => {
+    setIsTouch(window.matchMedia('(hover: none)').matches);
+  }, []);
 
   return (
     <motion.div
       onClick={onClick}
-      whileHover={{ y: -4 }}
+      whileHover={isTouch ? undefined : { y: -4 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
       className="group cursor-pointer bg-white/3 hover:bg-white/6 border border-white/8 hover:border-white/15 rounded-2xl overflow-hidden transition-all duration-300 flex flex-col"
+      style={{ touchAction: 'pan-y' }}
     >
-      {/* Cover image */}
-      {coverImg ? (
-        <div className="relative h-44 overflow-hidden bg-black/20">
-          <img
-            src={coverImg}
-            alt={post.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        </div>
-      ) : (
-        <div className="h-32 flex items-center justify-center bg-gradient-to-br from-[#b91c1c]/10 to-[#ef4444]/10 border-b border-white/5">
-          <BookOpen className="w-10 h-10 text-red-400/40" />
-        </div>
-      )}
+      {/* Cover image — uniform 16:9 aspect ratio for all cards */}
+      <div className="relative w-full overflow-hidden bg-black/20" style={{ paddingTop: '56.25%' }}>
+        {coverImg ? (
+          <>
+            <img
+              src={coverImg}
+              alt={post.title}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          </>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#b91c1c]/10 to-[#ef4444]/10">
+            <BookOpen className="w-10 h-10 text-red-400/40" />
+          </div>
+        )}
+      </div>
 
       <div className="p-5 flex flex-col flex-1">
         {/* Tags */}

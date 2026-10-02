@@ -1,203 +1,215 @@
 import React, { useState } from "react"
-import { Modal, IconButton, Box, Fade, Backdrop, Zoom, Typography } from "@mui/material"
+import { Modal, IconButton, Box, Backdrop } from "@mui/material"
 import CloseIcon from "@mui/icons-material/Close"
 import FullscreenIcon from "@mui/icons-material/Fullscreen"
 
-const Certificate = ({ ImgSertif }) => {
-	const [open, setOpen] = useState(false)
+const Certificate = ({ ImgSertif, name, company, description }) => {
+  const [open, setOpen] = useState(false)
 
-	const handleOpen = () => {
-		setOpen(true)
-	}
+  const handleOpen = () => setOpen(true)
+  const handleClose = () => setOpen(false)
 
-	const handleClose = () => {
-		setOpen(false)
-	}
+  return (
+    <Box component="div" sx={{ width: "100%" }}>
+      {/* Thumbnail Container — fixed uniform ratio */}
+      <Box
+        onClick={handleOpen}
+        sx={{
+          position: "relative",
+          width: "100%",
+          paddingTop: "66.66%", // 3:2 aspect ratio — consistent for all images
+          overflow: "hidden",
+          borderRadius: "12px",
+          cursor: "pointer",
+          background: "#111",
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+          transition: "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease",
+          "&:hover": {
+            transform: "translateY(-4px)",
+            boxShadow: "0 8px 32px rgba(239,68,68,0.2)",
+            borderColor: "rgba(239,68,68,0.4)",
+            "& .cert-overlay": {
+              opacity: 1,
+            },
+          },
+        }}
+      >
+        {/* The image always fills the fixed box */}
+        <Box
+          component="img"
+          src={ImgSertif}
+          alt={name || "Certificate"}
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",       // fills without distortion
+            objectPosition: "center",
+            display: "block",
+          }}
+        />
 
-	return (
-		<Box component="div" sx={{ width: "100%" }}>
-			{/* Thumbnail Container */}
-			<Box
-				className="certificate-thumb"
-				sx={{
-					position: "relative",
-					overflow: "hidden",
-					borderRadius: 2,
-					boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
-					transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-					aspectRatio: '4 / 3',
-					height: 220,
-					width: '100%',
-					background: '#18181b',
-					'&:hover': {
-						transform: "translateY(-5px)",
-						boxShadow: "0 12px 24px rgba(0,0,0,0.2)",
-						'& .overlay': {
-							opacity: 1,
-						},
-						'& .hover-content': {
-							transform: "translate(-50%, -50%)",
-							opacity: 1,
-						},
-						'& .certificate-image': {
-							filter: "contrast(1.05) brightness(1) saturate(1.1)",
-						},
-					},
-				}}>
-				{/* Certificate Image with Initial Filter */}
-				<Box
-					sx={{
-						position: "relative",
-						width: '100%',
-						height: '100%',
-						'&::before': {
-							content: '""',
-							position: "absolute",
-							top: 0,
-							left: 0,
-							right: 0,
-							bottom: 0,
-							backgroundColor: "rgba(0, 0, 0, 0.1)",
-							zIndex: 1,
-						},
-					}}>
-					<img
-						className="certificate-image"
-						src={ImgSertif}
-						alt="Certificate"
-						style={{
-							width: "100%",
-							height: "100%",
-							display: "block",
-							objectFit: "cover",
-							filter: "contrast(1.10) brightness(0.9) saturate(1.1)",
-							transition: "filter 0.3s ease",
-						}}
-						onClick={handleOpen}
-					/>
-				</Box>
+        {/* Hover overlay — "click to view" hint only */}
+        <Box
+          className="cert-overlay"
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(0,0,0,0.55)",
+            opacity: 0,
+            transition: "opacity 0.3s ease",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+          }}
+        >
+          <FullscreenIcon sx={{ color: "white", fontSize: 36 }} />
+          <Box
+            component="span"
+            sx={{
+              color: "white",
+              fontFamily: "monospace",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              letterSpacing: "0.05em",
+            }}
+          >
+            View Certificate
+          </Box>
+        </Box>
+      </Box>
 
-				{/* Hover Overlay */}
-				<Box
-					className="overlay"
-					sx={{
-						position: "absolute",
-						top: 0,
-						left: 0,
-						right: 0,
-						bottom: 0,
-						opacity: 0,
-						transition: "all 0.3s ease",
-						cursor: "pointer",
-						zIndex: 2,
-					}}
-					onClick={handleOpen}>
-					{/* Hover Content */}
-					<Box
-						className="hover-content"
-						sx={{
-							position: "absolute",
-							top: "50%",
-							left: "50%",
-							transform: "translate(-50%, -60%)",
-							opacity: 0,
-							transition: "all 0.4s ease",
-							textAlign: "center",
-							width: "100%",
-							color: "white",
-						}}>
-						<FullscreenIcon
-							sx={{
-								fontSize: 40,
-								mb: 1,
-								filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
-							}}
-						/>
-						<Typography
-							variant="h6"
-							sx={{
-								fontWeight: 600,
-								textShadow: "0 2px 4px rgba(0,0,0,0.3)",
-							}}>
-							View Certificate
-						</Typography>
-					</Box>
-				</Box>
-			</Box>
+      {/* Modal — full image + details revealed on click */}
+      <Modal
+        open={open}
+        onClose={handleClose}
+        BackdropComponent={Backdrop}
+        BackdropProps={{
+          timeout: 300,
+          sx: {
+            backgroundColor: "rgba(0,0,0,0.92)",
+            backdropFilter: "blur(6px)",
+          },
+        }}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Box
+          sx={{
+            position: "relative",
+            width: { xs: "95vw", md: "80vw", lg: "70vw" },
+            maxWidth: 900,
+            maxHeight: "95vh",
+            outline: "none",
+            display: "flex",
+            flexDirection: "column",
+            borderRadius: "16px",
+            overflow: "hidden",
+            background: "#0f0f0f",
+            border: "1px solid rgba(239,68,68,0.3)",
+            boxShadow: "0 0 60px rgba(239,68,68,0.15)",
+          }}
+        >
+          {/* Close button */}
+          <IconButton
+            onClick={handleClose}
+            sx={{
+              position: "absolute",
+              right: 12,
+              top: 12,
+              zIndex: 10,
+              color: "white",
+              backgroundColor: "rgba(0,0,0,0.7)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              "&:hover": {
+                backgroundColor: "rgba(239,68,68,0.3)",
+                transform: "scale(1.1)",
+              },
+              transition: "all 0.2s ease",
+            }}
+          >
+            <CloseIcon sx={{ fontSize: 20 }} />
+          </IconButton>
 
-			{/* Modal */}
-			<Modal
-				open={open}
-				onClose={handleClose}
-				aria-labelledby="modal-modal-title"
-				aria-describedby="modal-modal-description"
-				BackdropComponent={Backdrop}
-				BackdropProps={{
-					timeout: 300,
-					sx: {
-						backgroundColor: "rgba(0, 0, 0, 0.9)",
-						backdropFilter: "blur(5px)",
-					},
-				}}
-				sx={{
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					margin: 0,
-					padding: 0,
-					"& .MuiBackdrop-root": {
-						backgroundColor: "rgba(0, 0, 0, 0.9)",
-					},
-				}}>
-				<Box
-					sx={{
-						position: "relative",
-						width: "auto",
-						maxWidth: "90vw",
-						maxHeight: "90vh",
-						m: 0,
-						p: 0,
-						outline: "none",
-						"&:focus": {
-							outline: "none",
-						},
-					}}>
-					{/* Close Button */}
-					<IconButton
-						onClick={handleClose}
-						sx={{
-							position: "absolute",
-							right: 16,
-							top: 16,
-							color: "white",
-							bgcolor: "rgba(0,0,0,0.6)",
-							zIndex: 1,
-							padding: 1,
-							"&:hover": {
-								bgcolor: "rgba(0,0,0,0.8)",
-								transform: "scale(1.1)",
-							},
-						}}
-						size="large">
-						<CloseIcon sx={{ fontSize: 24 }} />
-					</IconButton>
+          {/* Full certificate image */}
+          <Box
+            component="img"
+            src={ImgSertif}
+            alt={name || "Certificate Full View"}
+            sx={{
+              width: "100%",
+              maxHeight: "65vh",
+              objectFit: "contain",
+              background: "#111",
+            }}
+          />
 
-					{/* Modal Image */}
-					<img
-						src={ImgSertif}
-						alt="Certificate Full View"
-						style={{
-							display: "block",
-							maxWidth: "100%",
-							maxHeight: "90vh",
-							margin: "0 auto",
-							objectFit: "contain",
-						}}
-					/>
-				</Box>
-			</Modal>
-		</Box>
-	)
+          {/* Details section — only visible inside modal */}
+          {(name || company || description) && (
+            <Box
+              sx={{
+                p: { xs: 2, md: 3 },
+                borderTop: "1px solid rgba(255,255,255,0.08)",
+                background: "#0a0a0a",
+              }}
+            >
+              {name && (
+                <Box
+                  component="h3"
+                  sx={{
+                    m: 0,
+                    mb: 0.5,
+                    fontSize: { xs: "1rem", md: "1.2rem" },
+                    fontWeight: 700,
+                    color: "#fca5a5",
+                    fontFamily: "monospace",
+                    letterSpacing: "0.03em",
+                  }}
+                >
+                  {name}
+                </Box>
+              )}
+              {company && (
+                <Box
+                  component="p"
+                  sx={{
+                    m: 0,
+                    mb: description ? 1 : 0,
+                    fontSize: "0.85rem",
+                    color: "rgba(255,255,255,0.5)",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {company}
+                </Box>
+              )}
+              {description && (
+                <Box
+                  component="p"
+                  sx={{
+                    m: 0,
+                    fontSize: "0.9rem",
+                    color: "rgba(255,255,255,0.75)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {description}
+                </Box>
+              )}
+            </Box>
+          )}
+        </Box>
+      </Modal>
+    </Box>
+  )
 }
 
 export default Certificate

@@ -12,19 +12,19 @@ import { db, doc, getDoc } from "../firebase";
 
 // ── Icon map for social platforms ────────────────────────────────────
 const PLATFORM_ICONS = {
-  github:     Github,
-  linkedin:   Linkedin,
-  instagram:  Instagram,
-  twitter:    Twitter,
-  youtube:    Youtube,
-  tiktok:     Globe,
-  medium:     Globe,
-  devto:      Globe,
-  tryhackme:  Shield,
+  github: Github,
+  linkedin: Linkedin,
+  instagram: Instagram,
+  twitter: Twitter,
+  youtube: Youtube,
+  tiktok: Globe,
+  medium: Globe,
+  devto: Globe,
+  tryhackme: Shield,
   hackthebox: Terminal,
-  telegram:   Globe,
-  discord:    Globe,
-  custom:     Globe,
+  telegram: Globe,
+  discord: Globe,
+  custom: Globe,
 };
 
 const Magnetic = ({ children }) => {
@@ -104,50 +104,50 @@ const FloatingCyberIcon = ({ icon: Icon, delay, x, y, size = 20 }) => (
 );
 
 // ── Constants ─────────────────────────────────────────────────────────
-const TYPING_SPEED   = 100;
-const ERASING_SPEED  = 50;
+const TYPING_SPEED = 100;
+const ERASING_SPEED = 50;
 const PAUSE_DURATION = 2000;
 
-const DEFAULT_WORDS    = ["Semicolon Ambassador", "Bug-Hunter", "Tech Enthusiast"];
-const DEFAULT_TECH     = ["C#", "ASP.NET", "Entity Framework", "SQL Server"];
+const DEFAULT_WORDS = ["Semicolon Ambassador", "Bug-Hunter", "Tech Enthusiast"];
+const DEFAULT_TECH = ["C#", "ASP.NET", "Entity Framework", "SQL Server"];
 const DEFAULT_HERO_IMG = "/home.jpg";
 
 // Fallback social links (shown while Firestore loads)
 const FALLBACK_SOCIALS = [
-  { id: "gh",  platform: "github",    label: "GitHub",   url: "https://github.com/MoamenHamdan",                   color: "#ffffff" },
-  { id: "li",  platform: "linkedin",  label: "LinkedIn", url: "https://www.linkedin.com/in/moamen-hamdan/",         color: "#0A66C2" },
-  { id: "ig",  platform: "instagram", label: "Instagram",url: "https://www.instagram.com/moamen_hamdann/",          color: "#E4405F" },
+  { id: "gh", platform: "github", label: "GitHub", url: "https://github.com/MoamenHamdan", color: "#ffffff" },
+  { id: "li", platform: "linkedin", label: "LinkedIn", url: "https://www.linkedin.com/in/moamen-hamdan/", color: "#0A66C2" },
+  { id: "ig", platform: "instagram", label: "Instagram", url: "https://www.instagram.com/moamen_hamdann/", color: "#E4405F" },
 ];
 
 // ── Main Component ────────────────────────────────────────────────────
 const Home = () => {
-  const [text, setText]         = useState("");
+  const [text, setText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const [wordIndex, setWordIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
-  const [isLoaded, setIsLoaded]   = useState(false);
-  const [mousePos, setMousePos]   = useState({ x: 0, y: 0 });
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  // Dynamic content
-  const [words,         setWords]         = useState(DEFAULT_WORDS);
-  const [techStack,     setTechStack]     = useState(DEFAULT_TECH);
-  const [heroImg,       setHeroImg]       = useState(DEFAULT_HERO_IMG);
+  // Dynamic content — start with defaults so page is NEVER blank
+  const [words, setWords] = useState(DEFAULT_WORDS);
+  const [techStack, setTechStack] = useState(DEFAULT_TECH);
+  const [heroImg, setHeroImg] = useState(DEFAULT_HERO_IMG);
   const [heroTitlePart1, setHeroTitlePart1] = useState("Back-End");
   const [heroTitlePart2, setHeroTitlePart2] = useState("Developer");
-  const [socialLinks,   setSocialLinks]   = useState(FALLBACK_SOCIALS);
+  const [socialLinks, setSocialLinks] = useState(FALLBACK_SOCIALS);
 
-  // Fetch homeContent settings
+  // Silently fetch & swap-in Firebase data (defaults already shown, no blank screen)
   useEffect(() => {
     const fetchSettings = async () => {
       try {
         const snap = await getDoc(doc(db, "siteSettings", "homeContent"));
         if (snap.exists()) {
           const data = snap.data();
-          if (data.typingWords?.length)  setWords(data.typingWords);
-          if (data.techStack?.length)    setTechStack(data.techStack);
-          if (data.heroImageUrl)         setHeroImg(data.heroImageUrl);
-          if (data.heroTitlePart1)       setHeroTitlePart1(data.heroTitlePart1);
-          if (data.heroTitlePart2)       setHeroTitlePart2(data.heroTitlePart2);
+          if (data.typingWords?.length) setWords(data.typingWords);
+          if (data.techStack?.length) setTechStack(data.techStack);
+          if (data.heroImageUrl) setHeroImg(data.heroImageUrl);
+          if (data.heroTitlePart1) setHeroTitlePart1(data.heroTitlePart1);
+          if (data.heroTitlePart2) setHeroTitlePart2(data.heroTitlePart2);
         }
       } catch (err) {
         console.warn("Could not load home settings:", err.message);
@@ -156,7 +156,6 @@ const Home = () => {
     fetchSettings();
   }, []);
 
-  // Fetch dynamic social links
   useEffect(() => {
     const fetchSocials = async () => {
       try {
@@ -179,7 +178,7 @@ const Home = () => {
   }, [words]);
 
   const handleTyping = useCallback(() => {
-    if (!words.length) return;
+    if (!words?.length) return;
     if (isTyping) {
       if (charIndex < words[wordIndex].length) {
         setText(prev => prev + words[wordIndex][charIndex]);
@@ -220,12 +219,12 @@ const Home = () => {
       />
 
       {/* Cybersecurity floating decorations */}
-      <FloatingCyberIcon icon={Shield}       x="8%"  y="18%" delay={0} size={40} />
-      <FloatingCyberIcon icon={Lock}         x="85%" y="12%" delay={2} size={30} />
-      <FloatingCyberIcon icon={Terminal}     x="72%" y="68%" delay={4} size={35} />
-      <FloatingCyberIcon icon={Wifi}         x="18%" y="78%" delay={3} size={25} />
+      <FloatingCyberIcon icon={Shield} x="8%" y="18%" delay={0} size={40} />
+      <FloatingCyberIcon icon={Lock} x="85%" y="12%" delay={2} size={30} />
+      <FloatingCyberIcon icon={Terminal} x="72%" y="68%" delay={4} size={35} />
+      <FloatingCyberIcon icon={Wifi} x="18%" y="78%" delay={3} size={25} />
       <FloatingCyberIcon icon={AlertTriangle} x="50%" y="8%" delay={1} size={22} />
-      <FloatingCyberIcon icon={Github}       x="92%" y="55%" delay={5} size={28} />
+      <FloatingCyberIcon icon={Github} x="92%" y="55%" delay={5} size={28} />
 
       {/* Decorative Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -280,21 +279,21 @@ const Home = () => {
                   <h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-6xl xl:text-7xl font-bold tracking-tight uppercase">
                     <span className="relative inline-block">
                       <span className="absolute -inset-2 bg-gradient-to-r from-red-500 to-red-900 blur-2xl opacity-40" />
-                      <span 
+                      <span
                         className="relative bg-gradient-to-r from-white via-red-100 to-red-200 bg-clip-text text-transparent glitch-text font-mono tracking-widest"
-                        data-text={heroTitlePart1}
+                        data-text={heroTitlePart1 || ""}
                       >
-                        {heroTitlePart1}
+                        {heroTitlePart1 || ""}
                       </span>
                     </span>
                     <br />
                     <span className="relative inline-block mt-2">
                       <span className="absolute -inset-2 bg-gradient-to-r from-[#ef4444] to-[#991b1b] blur-2xl opacity-40" />
-                      <span 
+                      <span
                         className="relative bg-gradient-to-r from-[#ef4444] to-[#991b1b] bg-clip-text text-transparent transition-all duration-500 hover:brightness-125 glitch-text font-mono tracking-widest"
-                        data-text={heroTitlePart2}
+                        data-text={heroTitlePart2 || ""}
                       >
-                        {heroTitlePart2}
+                        {heroTitlePart2 || ""}
                       </span>
                     </span>
                   </h1>
@@ -324,7 +323,7 @@ const Home = () => {
                 {/* CTA Buttons */}
                 <div className="flex flex-row gap-3 w-full justify-start" data-aos="fade-up" data-aos-delay="1400">
                   <CTAButton href="#Portofolio" text="Projects" icon={ExternalLink} />
-                  <CTAButton href="#Contact"    text="Contact"  icon={Mail} />
+                  <CTAButton href="#Contact" text="Contact" icon={Mail} />
                 </div>
 
                 {/* Dynamic Social Links from Firestore */}

@@ -1,7 +1,14 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-import { collection, addDoc } from "@firebase/firestore";
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    onSnapshot,
+    query,
+    orderBy,
+    serverTimestamp,
+} from "firebase/firestore";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDuGPI6PU6wqzxbZignmUmBX-aUjMsWAb8",
@@ -13,9 +20,18 @@ const firebaseConfig = {
     measurementId: "G-M5ZTB8CQ10"
 };
 
-// Initialize with a unique name
+// Initialize with a unique name to avoid duplicate-app errors
 const app = initializeApp(firebaseConfig, 'comments-app');
 const db = getFirestore(app);
-const storage = getStorage(app);
 
-export { db, storage, collection, addDoc };
+export {
+    db,
+    // Firestore helpers
+    collection,
+    addDoc,
+    getDocs,
+    onSnapshot,
+    query,
+    orderBy,
+    serverTimestamp,
+};
