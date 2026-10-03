@@ -1,54 +1,55 @@
-/**
- * Compresses an image File to a base64 string small enough for Firestore.
- * Targets ~500 KB max (well within Firestore's 1 MB document limit).
- *
- * @param {File} file         — the raw File object from <input type="file">
- * @param {number} maxWidth   — max pixel width (default 1024)
- * @param {number} quality    — JPEG quality 0-1 (default 0.75)
- * @returns {Promise<string>} — data-URL  "data:image/jpeg;base64,..."
- */
-export const compressImage = (file, maxWidth = 1024, quality = 0.75) => {
+// Bound the encoded string, not only JPEG bytes: base64 adds ~33%.
+export const MAX_IMAGE_LENGTH = 250_000;
+export const MAX_DOCUMENT_BYTES = 900_000;
+
+// Guard plain objects from admin forms, leaving room below Firestore's 1 MiB
+// document limit for field names, document paths, and encoding overhead.
+export function assertDocumentSize(data) {
+    if (new TextEncoder().encode(JSON.stringify(data)).length > MAX_DOCUMENT_BYTES) {
+        throw new Error('This entry is too large. Remove some images or use image URLs before saving.');
+    }
+}
+
+export const compressImage = (file, maxWidth = 1024, quality = 0.75, maxLength = MAX_IMAGE_LENGTH) => {
     return new Promise((resolve, reject) => {
+        if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            reject(new Error('Choose a JPEG, PNG or WebP image.'));
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            reject(new Error('Choose an image smaller than 5MB.'));
+            return;
+        }
         const reader = new FileReader();
-        reader.onerror = () => reject(new Error("Failed to read file"));
-        reader.onload = (e) => {
+        reader.onerror = () => reject(new Error('Failed to read image.'));
+        reader.onload = () => {
             const img = new Image();
-            img.onerror = () => reject(new Error("Failed to load image"));
+            img.onerror = () => reject(new Error('Failed to load image.'));
             img.onload = () => {
-                // Calculate scaled dimensions
-                let { width, height } = img;
-                if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
-                }
-
-                const canvas = document.createElement("canvas");
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // Try at requested quality; if still too big, step quality down
-                let dataUrl = canvas.toDataURL("image/jpeg", quality);
-                let q = quality;
-                while (dataUrl.length > 700_000 && q > 0.2) {
-                    q -= 0.1;
-                    dataUrl = canvas.toDataURL("image/jpeg", q);
-                }
-
-                if (dataUrl.length > 900_000) {
-                    reject(
-                        new Error(
-                            `Image is still too large after compression (${Math.round(
-                                dataUrl.length / 1024
-                            )} KB). Please use a smaller image or paste an external URL instead.`
-                        )
-                    );
-                } else {
-                    resolve(dataUrl);
-                }
+                try {
+                    if (!img.width || !img.height) throw new Error('Invalid image dimensions.');
+                    const scale = Math.min(1, maxWidth / Math.max(img.width, img.height));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.max(1, Math.round(img.width * scale));
+                    canvas.height = Math.max(1, Math.round(img.height * scale));
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) throw new Error('Image processing is unavailable in this browser.');
+                    for (let attempt = 0; attempt < 12; attempt++) {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        for (let q = quality; q >= 0.2; q -= 0.1) {
+                            const result = canvas.toDataURL('image/jpeg', q);
+                            if (!result.startsWith('data:image/jpeg;base64,')) throw new Error('Could not encode this image.');
+                            if (result.length <= maxLength) { resolve(result); return; }
+                        }
+                        canvas.width = Math.max(1, Math.floor(canvas.width * 0.75));
+                        canvas.height = Math.max(1, Math.floor(canvas.height * 0.75));
+                    }
+                    throw new Error('Image is too large. Choose a smaller image or use an image URL.');
+                } catch (error) { reject(error); }
             };
-            img.src = e.target.result;
+            img.src = reader.result;
         };
         reader.readAsDataURL(file);
     });

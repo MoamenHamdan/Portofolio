@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { db, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "../../firebase";
-import { compressImage } from "../../utils/imageUtils";
+import { compressImage, assertDocumentSize } from "../../utils/imageUtils";
 import {
     Plus, X, Edit2, Trash2, Upload, Image, Loader2,
     CheckCircle, AlertCircle, Save, Cpu, Info
@@ -62,7 +62,7 @@ const IconPicker = ({ value, onChange }) => {
                 )}
             </div>
             <div className="flex-1">
-                <p className="text-xs text-gray-400 mb-1">Upload skill icon (PNG/SVG/JPG)</p>
+                <p className="text-xs text-gray-400 mb-1">Upload skill icon (PNG, JPEG or WebP)</p>
                 <input
                     type="url"
                     value={value?.startsWith("data:") ? "" : value || ""}
@@ -71,7 +71,7 @@ const IconPicker = ({ value, onChange }) => {
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-white placeholder-gray-600 text-xs focus:outline-none focus:border-[#b91c1c]/50 transition-all"
                 />
             </div>
-            <input ref={inputRef} type="file" accept="image/*,.svg" className="hidden" onChange={handleFile} />
+            <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFile} />
         </div>
     );
 };
@@ -95,6 +95,7 @@ const SkillModal = ({ isOpen, onClose, onSaved, editSkill }) => {
         setSaving(true);
         try {
             const payload = { ...form, order: Number(form.order) };
+            assertDocumentSize(payload);
             if (editSkill?.id) {
                 await updateDoc(doc(db, "skills", editSkill.id), payload);
             } else {
@@ -247,7 +248,7 @@ const Skills = () => {
 
             <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/8 border border-red-500/15 text-red-300/70 text-xs">
                 <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                Skill icons are compressed & stored free in Firestore. Use the order number to arrange them. Changes appear live on your portfolio.
+                Skill icons are compressed before saving. Use the order number to arrange them. Changes appear live on your portfolio.
             </div>
 
             {loading ? (

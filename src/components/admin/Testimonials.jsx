@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { db, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "../../firebase";
-import { compressImage } from "../../utils/imageUtils";
+import { compressImage, assertDocumentSize } from "../../utils/imageUtils";
 import {
     Plus, X, Edit2, Trash2, Upload, Star, Loader2,
     CheckCircle, AlertCircle, Save, User, MessageSquare, Briefcase
@@ -88,7 +88,7 @@ const AvatarPicker = ({ value, onChange }) => {
                     className="mt-2 w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-white placeholder-gray-600 text-xs focus:outline-none focus:border-[#b91c1c]/50 transition-all"
                 />
             </div>
-            <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+            <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFile} />
         </div>
     );
 };
@@ -112,6 +112,7 @@ const TestimonialModal = ({ isOpen, onClose, onSaved, editItem }) => {
         setSaving(true);
         try {
             const payload = { ...form, order: Number(form.order), rating: Number(form.rating) };
+            assertDocumentSize(payload);
             if (editItem?.id) {
                 await updateDoc(doc(db, "testimonials", editItem.id), payload);
             } else {

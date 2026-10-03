@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { db, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "../../firebase";
-import { compressImage } from "../../utils/imageUtils";
+import { compressImage, assertDocumentSize } from "../../utils/imageUtils";
 import {
   Plus, X, Edit2, Trash2, Upload, Image, Award, Loader2,
   CheckCircle, AlertCircle, Save, Calendar, GripVertical, Info
@@ -84,7 +84,7 @@ const ImagePickerInline = ({ value, onChange }) => {
           </div>
         )}
       </div>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFile} />
       <input type="url" value={pasteUrl}
         onChange={(e) => handleUrlChange(e.target.value)}
         placeholder="Or paste image URL (imgur, etc.)"
@@ -112,6 +112,7 @@ const CertModal = ({ isOpen, onClose, onSaved, editCert }) => {
     setSaving(true);
     try {
       const payload = { ...form, order: Number(form.order) };
+      assertDocumentSize(payload);
       if (editCert?.id) {
         await updateDoc(doc(db, "certificates", editCert.id), payload);
       } else {
@@ -182,7 +183,7 @@ const CertModal = ({ isOpen, onClose, onSaved, editCert }) => {
             <label className="block text-sm font-medium text-gray-300 mb-1.5">Certificate Image</label>
             <div className="flex items-start gap-2 p-2.5 rounded-xl bg-red-500/8 border border-red-500/15 text-red-300/70 text-xs mb-2">
               <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-              Auto-compressed & stored in Firestore (free). For large images, paste an Imgur URL.
+              Images are compressed before saving. You can also paste an image URL.
             </div>
             <ImagePickerInline
               value={form.image}

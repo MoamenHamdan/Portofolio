@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { db, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "../../firebase";
-import { compressImage } from "../../utils/imageUtils";
+import { compressImage, assertDocumentSize } from "../../utils/imageUtils";
 import {
   Plus, X, Edit2, Trash2, Upload, Image, Github, Link,
   Loader2, CheckCircle, AlertCircle, Save, FileText, Info, GripVertical
@@ -121,7 +121,7 @@ const ImagePickerInline = ({ value, onChange }) => {
           </div>
         )}
       </div>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFile} />
       <input type="url" value={pasteUrl}
         onChange={(e) => handleUrlChange(e.target.value)}
         placeholder="Or paste image URL (imgur, postimages, etc.)"
@@ -148,6 +148,7 @@ const ProjectModal = ({ isOpen, onClose, onSaved, editProject }) => {
     e.preventDefault();
     setSaving(true);
     try {
+      assertDocumentSize(form);
       if (editProject?.id) {
         await updateDoc(doc(db, "projects", editProject.id), form);
       } else {
@@ -196,7 +197,7 @@ const ProjectModal = ({ isOpen, onClose, onSaved, editProject }) => {
             <label className="block text-sm font-medium text-gray-300 mb-1.5">Project Image</label>
             <div className="flex items-start gap-2 p-2.5 rounded-xl bg-red-500/8 border border-red-500/15 text-red-300/70 text-xs mb-2">
               <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-              Uploaded images are compressed & stored in Firestore for free. For large hi-res photos, paste an Imgur URL.
+              Images are compressed before saving. You can also paste an image URL.
             </div>
             <ImagePickerInline
               value={form.Img}

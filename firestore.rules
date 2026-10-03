@@ -29,8 +29,7 @@ rules_version = '2';
 //      per-user write frequency natively (no stateful counters).
 //      Rate-limiting is done client-side (60-second cooldown in Contact.jsx)
 //      which is a UX-layer deterrent, not a hard security guarantee.
-//      For hard rate-limiting on Spark plan, use Firestore write counts
-//      checked via a Cloud Function — but Cloud Functions require Blaze.
+//      Cloud Functions require Blaze and are not used by this app.
 //      Accept this trade-off: the field-size validation prevents the worst
 //      abuse (large payloads), and Firebase Auth + rules stop all writes
 //      to protected collections.
@@ -134,7 +133,8 @@ service cloud.firestore {
         && isValidString(request.resource.data.content, 1000)
         && (request.resource.data.profileImage == null
             || (request.resource.data.profileImage is string
-                && request.resource.data.profileImage.size() <= 2048))
+                && request.resource.data.profileImage.size() <= 32000
+                && request.resource.data.profileImage.matches('data:image/jpeg;base64,[A-Za-z0-9+/=]+')))
         && request.resource.data.createdAt == request.time;
       allow update, delete: if isAdmin();
     }

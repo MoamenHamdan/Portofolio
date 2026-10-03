@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { db, doc, getDoc, setDoc, collection, getCountFromServer } from "../../firebase";
-import { compressImage } from "../../utils/imageUtils";
+import { compressImage, assertDocumentSize } from "../../utils/imageUtils";
 import {
     Save, Plus, X, Upload, Image, FileText, Type, Code2, Loader2,
     CheckCircle, AlertCircle, User, Info, FolderGit2, ShieldCheck, Clock
@@ -144,7 +144,7 @@ const ImagePicker = ({ label, currentUrl, onPicked, hint }) => {
                     <div className="text-center text-gray-500 group-hover:text-gray-400 transition-colors">
                         {compressing
                             ? <><Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-red-400" /><p className="text-sm">Compressing…</p></>
-                            : <><Upload className="w-8 h-8 mx-auto mb-2" /><p className="text-sm">Click to upload & compress</p><p className="text-xs mt-1 text-gray-600">Stored free in Firestore</p></>
+                            : <><Upload className="w-8 h-8 mx-auto mb-2" /><p className="text-sm">Click to upload & compress</p><p className="text-xs mt-1 text-gray-600">Compressed before saving</p></>
                         }
                     </div>
                 )}
@@ -154,7 +154,7 @@ const ImagePicker = ({ label, currentUrl, onPicked, hint }) => {
                     </div>
                 )}
             </div>
-            <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+            <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFile} />
 
             <div>
                 <label className="block text-xs text-gray-500 mb-1">Or paste external image URL</label>
@@ -227,6 +227,7 @@ const HomeContent = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
+            assertDocumentSize(data);
             await setDoc(SETTINGS_DOC(db), data, { merge: true });
             showToast("success", "All changes saved successfully!");
         } catch (err) {
@@ -251,7 +252,7 @@ const HomeContent = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Home Content</h1>
-                    <p className="text-gray-400 text-sm mt-1">Everything stored free in Firestore — no paid storage</p>
+                    <p className="text-gray-400 text-sm mt-1">Content and compressed images saved in Firestore</p>
                 </div>
                 <button onClick={handleSave} disabled={saving || loadError}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#b91c1c] to-[#ef4444] text-white text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-60 shadow-lg shadow-red-500/20">
@@ -313,7 +314,7 @@ const HomeContent = () => {
                 <ImagePicker
                     currentUrl={data.heroImageUrl}
                     onPicked={(url) => setData(d => ({ ...d, heroImageUrl: url }))}
-                    hint="Image is compressed & stored in Firestore for free. Large images — paste an Imgur/PostImages URL instead."
+                    hint="Images are compressed before saving. You can also paste an image URL."
                 />
             </SectionCard>
 
