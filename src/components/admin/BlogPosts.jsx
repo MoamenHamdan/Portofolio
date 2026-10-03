@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { db, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "../../firebase";
-import { compressImage } from "../../utils/imageUtils";
+import { compressImage, assertDocumentSize } from "../../utils/imageUtils";
 import {
   Plus, X, Edit2, Trash2, Upload, Loader2,
   CheckCircle, AlertCircle, Save, BookOpen, Calendar, Info
@@ -92,7 +92,7 @@ const MultiImagePicker = ({ images, onChange }) => {
     <div className="space-y-3">
       <div className="flex items-start gap-2 p-2.5 rounded-xl bg-red-500/8 border border-red-500/15 text-red-300/70 text-xs">
         <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-        Images are compressed & stored in Firestore (free). For large photos, paste an Imgur URL.
+        Images are compressed before saving. You can also paste an image URL.
       </div>
       {/* Existing images preview */}
       {images.length > 0 && (
@@ -117,7 +117,7 @@ const MultiImagePicker = ({ images, onChange }) => {
           {compressing ? "Compressing…" : "Upload Images"}
         </button>
       </div>
-      <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleFiles} />
       {/* URL input */}
       <div className="flex gap-2">
         <input type="url" value={urlInput}
@@ -153,6 +153,7 @@ const BlogModal = ({ isOpen, onClose, onSaved, editPost }) => {
     setSaving(true);
     try {
       const payload = { ...form, order: Number(form.order) };
+      assertDocumentSize(payload);
       if (editPost?.id) {
         await updateDoc(doc(db, "blogPosts", editPost.id), payload);
       } else {

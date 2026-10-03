@@ -1,4 +1,45 @@
 {
   "indexes": [],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "portfolio-comments",
+      "fieldPath": "profileImage",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "siteSettings",
+      "fieldPath": "heroImageUrl",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "siteSettings",
+      "fieldPath": "aboutImageUrl",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "projects",
+      "fieldPath": "Img",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "certificates",
+      "fieldPath": "image",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "skills",
+      "fieldPath": "icon",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "testimonials",
+      "fieldPath": "avatar",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "blogPosts",
+      "fieldPath": "images",
+      "indexes": []
+    }
+  ]
 }

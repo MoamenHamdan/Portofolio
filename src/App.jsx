@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense, useEffect } from 'react';
 import AOS from 'aos';
-import ContentState from './components/ContentState';
+import LoadingScreen from './components/LoadingScreen';
+import InitialContentGate from './components/InitialContentGate';
 import "./index.css";
 import Home from "./Pages/Home";
 import About from "./Pages/About";
@@ -35,8 +36,8 @@ const ProjectPageLayout = () => (
 function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <Suspense fallback={<ContentState loading />}><Routes>
-        <Route path="/" element={<LandingPage />} />
+      <Suspense fallback={<LoadingScreen />}><Routes>
+        <Route path="/" element={<InitialContentGate><LandingPage /></InitialContentGate>} />
         <Route path="/project/:id" element={<ProjectPageLayout />} />
         <Route path="/admin/*" element={<AdminPanel />} />
       </Routes></Suspense>

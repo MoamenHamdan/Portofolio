@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { addDoc, collection, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { addDoc, collection, onSnapshot, query, orderBy, limit, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
+import { compressImage } from '../utils/imageUtils';
 import { MessageCircle, UserCircle2, Loader2, AlertCircle, Send, ImagePlus, X } from 'lucide-react';
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -42,13 +42,17 @@ const CommentForm = memo(({ onSubmit, isSubmitting }) => {
     const [userName, setUserName] = useState('');
     const [imagePreview, setImagePreview] = useState(null);
     const [imageFile, setImageFile] = useState(null);
+    const [imageError, setImageError] = useState('');
     const textareaRef = useRef(null);
     const fileInputRef = useRef(null);
 
     const handleImageChange = useCallback((e) => {
+        setImageError('');
         const file = e.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                setImageError('Choose a JPEG, PNG or WebP image smaller than 5MB.');
+                e.target.value = '';
                 return;
             }
             setImageFile(file);
@@ -86,6 +90,7 @@ const CommentForm = memo(({ onSubmit, isSubmitting }) => {
                 </label>
                 <input
                     type="text"
+                    maxLength={100}
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     placeholder="Enter your name"
@@ -100,6 +105,7 @@ const CommentForm = memo(({ onSubmit, isSubmitting }) => {
                 </label>
                 <textarea
                     ref={textareaRef}
+                    maxLength={1000}
                     value={newComment}
                     onChange={handleTextareaChange}
                     placeholder="Write your message here..."
@@ -139,7 +145,7 @@ const CommentForm = memo(({ onSubmit, isSubmitting }) => {
                                 type="file"
                                 ref={fileInputRef}
                                 onChange={handleImageChange}
-                                accept="image/*"
+                                accept="image/jpeg,image/png,image/webp"
                                 className="hidden"
                             />
                             <button
@@ -151,13 +157,14 @@ const CommentForm = memo(({ onSubmit, isSubmitting }) => {
                                 <span>Choose Profile Photo</span>
                             </button>
                             <p className="text-center text-gray-400 text-sm mt-2">
-                                Max file size: 5MB
+                                JPEG, PNG or WebP · Max 5MB · Automatically resized
                             </p>
                         </div>
                     )}
                 </div>
             </div>
 
+            {imageError && <p role="alert" className="text-red-400 text-sm">{imageError}</p>}
             <button
                 type="submit"
                 disabled={isSubmitting}
@@ -198,7 +205,7 @@ const Komentar = () => {
 
     useEffect(() => {
         const commentsRef = collection(db, 'portfolio-comments');
-        const q = query(commentsRef, orderBy('createdAt', 'desc'));
+        const q = query(commentsRef, orderBy('createdAt', 'desc'), limit(50));
         
         return onSnapshot(q, (querySnapshot) => {
             const commentsData = querySnapshot.docs.map((doc) => ({
@@ -209,22 +216,12 @@ const Komentar = () => {
         }, () => setError("Comments could not be loaded. Please try again later."));
     }, []);
 
-    const uploadImage = useCallback(async (imageFile) => {
-        if (!imageFile) return null;
-        const extension = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[imageFile.type];
-        if (!extension || imageFile.size > 5 * 1024 * 1024) throw new Error('Unsupported profile image');
-        const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-        const storageRef = ref(storage, `profile-images/${id}.${extension}`);
-        await uploadBytes(storageRef, imageFile, { contentType: imageFile.type });
-        return getDownloadURL(storageRef);
-    }, []);
-
     const handleCommentSubmit = useCallback(async ({ newComment, userName, imageFile }) => {
         setError('');
         setIsSubmitting(true);
         
         try {
-            const profileImageUrl = await uploadImage(imageFile);
+            const profileImageUrl = imageFile ? await compressImage(imageFile, 160, 0.7, 32_000) : null;
             await addDoc(collection(db, 'portfolio-comments'), {
                 content: newComment.trim(),
                 userName: userName.trim(),
@@ -233,13 +230,13 @@ const Komentar = () => {
             });
             return true;
         } catch (error) {
-            setError('Failed to post comment. Please try again.');
+            setError(error.code ? 'Failed to post comment. Please try again later.' : error.message);
             console.error('Error adding comment: ', error);
             return false;
         } finally {
             setIsSubmitting(false);
         }
-    }, [uploadImage]);
+    }, []);
 
     const formatDate = useCallback((timestamp) => {
         if (!timestamp) return '';
@@ -269,7 +266,7 @@ const Komentar = () => {
                     <MessageCircle className="w-6 h-6 text-red-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white">
-                    Comments <span className="text-red-400">({comments.length})</span>
+                    Latest comments <span className="text-red-400">({comments.length})</span>
                 </h3>
             </div>
         </div>
