@@ -6,7 +6,7 @@ import {
   ArrowLeft, ExternalLink, Github, Code2, Star,
   ChevronRight, Layers, Layout, Globe, Package, Cpu, Code,
 } from "lucide-react";
-import Swal from 'sweetalert2';
+import { safeUrl } from '../utils/siteContent';
 
 const TECH_ICONS = {
   React: Globe,
@@ -80,22 +80,6 @@ const ProjectStats = ({ project }) => {
   );
 };
 
-const handleGithubClick = (githubLink) => {
-  if (githubLink === 'Private') {
-    Swal.fire({
-      icon: 'info',
-      title: 'Source Code Private',
-      text: 'Maaf, source code untuk proyek ini bersifat privat.',
-      confirmButtonText: 'Mengerti',
-      confirmButtonColor: '#3085d6',
-      background: '#030014',
-      color: '#ffffff'
-    });
-    return false;
-  }
-  return true;
-};
-
 const ProjectDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -121,6 +105,9 @@ const ProjectDetails = () => {
   }, [id, attempt]);
   if (loading || error) return <ContentState loading={loading} error={error} onRetry={() => setAttempt(v => v + 1)} />;
   if (!project) return <div className="p-12 text-center"><h1>Project not found</h1><a href="/#Portofolio" className="underline">Back to portfolio</a></div>;
+
+  const demoUrl = safeUrl(project.Link);
+  const githubUrl = safeUrl(project.Github);
 
   return (
     <div className="min-h-[100dvh] bg-[#030014] px-[2%] sm:px-0 relative overflow-hidden">
@@ -173,8 +160,8 @@ const ProjectDetails = () => {
 
               <div className="flex flex-wrap gap-3 md:gap-4">
                 {/* Action buttons */}
-                <a
-                  href={project.Link}
+                {demoUrl && <a
+                  href={demoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative inline-flex items-center space-x-1.5 md:space-x-2 px-4 md:px-8 py-2.5 md:py-4 bg-gradient-to-r from-red-600/10 to-red-600/10 hover:from-red-600/20 hover:to-red-600/20 text-red-300 rounded-xl transition-all duration-300 border border-red-500/20 hover:border-red-500/40 backdrop-blur-xl overflow-hidden text-sm md:text-base"
@@ -182,19 +169,19 @@ const ProjectDetails = () => {
                   <div className="absolute inset-0 translate-y-[100%] bg-gradient-to-r from-red-600/10 to-red-600/10 transition-transform duration-300 group-hover:translate-y-[0%]" />
                   <ExternalLink className="relative w-4 h-4 md:w-5 md:h-5 group-hover:rotate-12 transition-transform" />
                   <span className="relative font-medium">Live Demo</span>
-                </a>
+                </a>}
 
-                <a
-                  href={project.Github}
+                {githubUrl && <a
+                  href={githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative inline-flex items-center space-x-1.5 md:space-x-2 px-4 md:px-8 py-2.5 md:py-4 bg-gradient-to-r from-red-600/10 to-red-600/10 hover:from-red-600/20 hover:to-red-600/20 text-red-300 rounded-xl transition-all duration-300 border border-red-500/20 hover:border-red-500/40 backdrop-blur-xl overflow-hidden text-sm md:text-base"
-                  onClick={(e) => !handleGithubClick(project.Github) && e.preventDefault()}
                 >
                   <div className="absolute inset-0 translate-y-[100%] bg-gradient-to-r from-red-600/10 to-red-600/10 transition-transform duration-300 group-hover:translate-y-[0%]" />
                   <Github className="relative w-4 h-4 md:w-5 md:h-5 group-hover:rotate-12 transition-transform" />
                   <span className="relative font-medium">Github</span>
-                </a>
+                </a>}
+                {project.Github === 'Private' && <p className="text-gray-400 py-3">Source code is private.</p>}
               </div>
 
               <div className="space-y-4 md:space-y-6">

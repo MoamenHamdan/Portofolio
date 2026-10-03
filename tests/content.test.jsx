@@ -58,6 +58,18 @@ describe('navigation and direct project links', () => {
   render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={['/project/direct']}><Routes><Route path="/project/:id" element={<ProjectDetails/>}/></Routes></MemoryRouter>);
   expect((await screen.findAllByText('Direct Project')).length).toBeGreaterThan(0); expect(mocks.getDoc).toHaveBeenCalledWith('direct'); expect(screen.queryByText('Loading content…')).toBeNull();
  });
+ it.each([['', ''], ['javascript:alert(1)', 'Private']])('omits missing or unsafe project action URLs (%s, %s)', async (Link, Github) => {
+  mocks.getDoc.mockResolvedValue({exists:()=>true,id:'links',data:()=>({Title:'Links project',Link,Github})});
+  render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={['/project/links']}><Routes><Route path="/project/:id" element={<ProjectDetails/>}/></Routes></MemoryRouter>);
+  await screen.findByRole('heading',{name:'Links project'});
+  expect(screen.queryByRole('link',{name:'Live Demo'})).toBeNull(); expect(screen.queryByRole('link',{name:'Github'})).toBeNull();
+  if (Github === 'Private') expect(screen.getByText('Source code is private.')).toBeTruthy();
+ });
+ it('preserves valid project action links', async () => {
+  mocks.getDoc.mockResolvedValue({exists:()=>true,id:'links',data:()=>({Title:'Links project',Link:'https://example.com/demo',Github:'https://github.com/example/repo'})});
+  render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={['/project/links']}><Routes><Route path="/project/:id" element={<ProjectDetails/>}/></Routes></MemoryRouter>);
+  expect((await screen.findByRole('link',{name:'Live Demo'})).href).toBe('https://example.com/demo'); expect(screen.getByRole('link',{name:'Github'}).href).toBe('https://github.com/example/repo');
+ });
  it('shows a missing-project state', async () => { mocks.getDoc.mockResolvedValue({exists:()=>false}); render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={['/project/missing']}><Routes><Route path="/project/:id" element={<ProjectDetails/>}/></Routes></MemoryRouter>); expect(await screen.findByText('Project not found')).toBeTruthy(); });
  it('offers retry after a project read fails', async () => { mocks.getDoc.mockRejectedValue(new Error('offline')); render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={['/project/fail']}><Routes><Route path="/project/:id" element={<ProjectDetails/>}/></Routes></MemoryRouter>); expect(await screen.findByRole('button',{name:'Try again'})).toBeTruthy(); });
 });
